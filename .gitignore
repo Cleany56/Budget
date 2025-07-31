@@ -2,12 +2,24 @@
 
 # dependencies
 node_modules/
+*/node_modules/
+/.pnp
+.pnp.js
+package-lock.json
+yarn.lock
+
+# testing
+/coverage
+*/coverage/
 
 # Expo
 .expo/
-dist/
+*/dist/
 web-build/
 expo-env.d.ts
+*.apk
+*.aab
+*.hprof
 
 # Native
 .kotlin/
@@ -17,6 +29,15 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+*.ipa
+
+# Backend
+*/dist/
+*/build/
+.env
+*/.env
+*/logs/
+*.log
 
 # Metro
 .metro-health-check*
@@ -25,13 +46,34 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+lerna-debug.log*
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
 # macOS
 .DS_Store
 *.pem
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # local env files
 .env*.local
 
 # typescript
 *.tsbuildinfo
+tsconfig.tsbuildinfo
