@@ -1,3 +1,13 @@
+// Account types for dashboard summary
+export type AccountType = 'Bank' | 'Investment' | 'Credit Card' | 'Checking' | 'Savings';
+
+export interface AccountSummary {
+  id: string;
+  name: string;
+  type: AccountType;
+  balance: number;
+  currency: string;
+}
 // Types for the ExpenseTracker app
 
 export interface Expense {
@@ -7,6 +17,7 @@ export interface Expense {
   date: Date;
   category: ExpenseCategory;
   notes?: string;
+  accountId?: string; // Link to AccountSummary
 }
 
 export enum ExpenseCategory {
