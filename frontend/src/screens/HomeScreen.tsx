@@ -41,7 +41,7 @@ const HomeScreen = () => {
   const ListHeader = () => (
     <View>
       <NavBar date={dayString} />
-      <ChartsCarousel accounts={accounts} expenses={expenses} />
+      <ChartsCarousel />
       <Text style={styles.sectionTitle}>Accounts</Text>
       <View style={styles.accountDropdowns}>
         {groupedAccounts.map(group => (

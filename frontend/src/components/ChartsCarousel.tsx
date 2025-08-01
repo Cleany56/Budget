@@ -15,12 +15,14 @@ const chartWidth = Dimensions.get('window').width - tileHorizontalPadding;
 const chartHeight = 180;
 
 
-import { Expense, AccountSummary } from '../types';
-
-type ChartsCarouselProps = {
-  accounts: AccountSummary[];
-  expenses: Expense[];
-};
+import {
+  INVESTMENT_BALANCES_2025,
+  CHECKING_BALANCES_2025,
+  SAVINGS_BALANCES_2025,
+  CREDITCARD_BALANCES_2025,
+  DUMMY_EXPENSES
+} from '../utils/dummyData';
+import { Expense } from '../types';
 
 function getLast7DaysLabels() {
   const days = [];
@@ -60,47 +62,28 @@ function getSpendingData(expenses: Expense[]) {
   return { labels, data };
 }
 
-function getInvestmentsData(accounts: AccountSummary[]) {
-  const labels = getLast7MonthsLabels();
-  const investment = accounts.filter(a => a.type === 'Investment');
-  const current = investment.reduce((sum, a) => sum + a.balance, 0);
-  let data = labels.map(() => current);
-  if (data.every(v => v === current) && current !== 0) {
-    data[0] = current / 2;
-  }
+function getInvestmentsData() {
+  // Use dummy monthly balances for 2025
+  const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const data = INVESTMENT_BALANCES_2025;
   return { labels, data };
 }
 
-function getNetWorthData(accounts: AccountSummary[]) {
-  const labels = getLast7MonthsLabels();
-  const getNetWorth = () => {
-    const investment = accounts.filter(a => a.type === 'Investment').reduce((sum, a) => sum + a.balance, 0);
-    const checking = accounts.filter(a => a.type === 'Checking').reduce((sum, a) => sum + a.balance, 0);
-    const savings = accounts.filter(a => a.type === 'Savings').reduce((sum, a) => sum + a.balance, 0);
-    const card = accounts.filter(a => a.type === 'Credit Card').reduce((sum, a) => sum + a.balance, 0);
-    return investment + checking + savings - Math.abs(card);
-  };
-  const netWorth = getNetWorth();
-  let data = labels.map(() => netWorth);
-  if (data.every(v => v === netWorth) && netWorth !== 0) {
-    data[0] = netWorth / 2;
-  }
+function getNetWorthData() {
+  // Use dummy monthly balances for 2025
+  const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const data = INVESTMENT_BALANCES_2025.map((inv, i) =>
+    inv + CHECKING_BALANCES_2025[i] + SAVINGS_BALANCES_2025[i] - Math.abs(CREDITCARD_BALANCES_2025[i])
+  );
   return { labels, data };
 }
 
-const ChartsCarousel: React.FC<ChartsCarouselProps> = ({ accounts, expenses }) => {
-  const spending = getSpendingData(expenses);
-  const investments = getInvestmentsData(accounts);
-  const netWorth = getNetWorthData(accounts);
+const ChartsCarousel: React.FC = () => {
+  const investments = getInvestmentsData();
+  const netWorth = getNetWorthData();
+  // Use actual spending data for the Spending chart
+  const spending = getSpendingData(DUMMY_EXPENSES);
   const chartData = [
-    {
-      title: 'Spending',
-      data: spending.data,
-      labels: spending.labels,
-      color: '#e17055',
-      segments: 0,
-      yLabelsOffset: 0,
-    },
     {
       title: 'Investments',
       data: investments.data,
@@ -108,6 +91,7 @@ const ChartsCarousel: React.FC<ChartsCarouselProps> = ({ accounts, expenses }) =
       color: '#0984e3',
       segments: 0,
       yLabelsOffset: 0,
+      latest: investments.data[investments.data.length - 1],
     },
     {
       title: 'Net Worth',
@@ -116,6 +100,16 @@ const ChartsCarousel: React.FC<ChartsCarouselProps> = ({ accounts, expenses }) =
       color: '#00b894',
       segments: 3,
       yLabelsOffset: 8,
+      latest: netWorth.data[netWorth.data.length - 1],
+    },
+    {
+      title: 'Spending',
+      data: spending.data,
+      labels: spending.labels,
+      color: '#e17055',
+      segments: 0,
+      yLabelsOffset: 0,
+      latest: spending.data[spending.data.length - 1] || 0,
     },
   ];
   return (
@@ -125,6 +119,9 @@ const ChartsCarousel: React.FC<ChartsCarouselProps> = ({ accounts, expenses }) =
           <View key={chart.title} style={styles.chartWrapper}>
             <View style={styles.tile}>
               <Text style={styles.chartTitle}>{chart.title}</Text>
+              <Text style={{ fontSize: 13, color: '#888', marginBottom: 4 }}>
+                Current: {shortNumber(String(chart.latest))}
+              </Text>
               <LineChart
                 data={{
                   labels: chart.labels,
@@ -159,9 +156,9 @@ const ChartsCarousel: React.FC<ChartsCarouselProps> = ({ accounts, expenses }) =
                 yLabelsOffset={chart.yLabelsOffset}
                 segments={chart.segments}
                 fromZero={false}
-                bezier
                 style={styles.chart}
                 formatYLabel={shortNumber}
+                withDots={false}
               />
             </View>
           </View>
@@ -200,7 +197,8 @@ const styles = StyleSheet.create({
   chartTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    paddingVertical: 16,
+    paddingRight: 48,
     color: '#222',
     textAlign: 'center',
     alignSelf: 'center',
