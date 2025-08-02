@@ -1,26 +1,17 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
-import React from 'react';
+import React, { useState } from 'react';
+import AppNavigator from './src/navigation/AppNavigator';
 import HomeScreen from './src/screens/HomeScreen';
-import BottomNavBar from './src/components/BottomNavBar';
-import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
-
-
-function AppContent() {
-  const { darkMode, colors, toggleDarkMode } = useTheme();
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }] }>
-      <HomeScreen toggleDarkMode={toggleDarkMode} />
-      <StatusBar style={darkMode ? 'light' : 'dark'} />
-      <BottomNavBar />
-    </View>
-  );
-}
+import { ThemeProvider } from './src/theme/ThemeContext';
 
 export default function App() {
+  const [darkMode, setDarkMode] = useState(false);
+  
   return (
     <ThemeProvider>
-      <AppContent />
+      <AppNavigator />
+      <StatusBar style={darkMode ? 'light' : 'dark'} />
     </ThemeProvider>
   );
 }

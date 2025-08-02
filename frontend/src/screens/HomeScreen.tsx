@@ -1,9 +1,5 @@
-
-
 import React from 'react';
 import { View, Text, StyleSheet, SectionList } from 'react-native';
-import NavBar from '../components/NavBar';
-
 import { Expense, AccountSummary } from '../types';
 import { AccountType } from '../types';
 import { DUMMY_EXPENSES, DUMMY_ACCOUNTS } from '../utils/dummyData';
@@ -12,14 +8,16 @@ import { mapToDisplayTransaction } from '../utils/transactionDisplay';
 import { getTransactionIconComponent } from '../utils/transactionIcons';
 import AccountDropdown from '../components/AccountDropdown';
 import StatSwitcher from '../components/StatSwitcher';
+import AppLayout from '../components/AppLayout';
 import { useTheme } from '../theme/ThemeContext';
 
 interface HomeScreenProps {
-  toggleDarkMode: () => void;
+  toggleDarkMode?: () => void;
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode }) => {
-  const { darkMode, colors } = useTheme();
+const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode: toggleDarkModeProp }) => {
+  const { darkMode, colors, toggleDarkMode: themeToggleDarkMode } = useTheme();
+  const toggleDarkModeFn = toggleDarkModeProp || themeToggleDarkMode;
   // Use dummy data for now
   const expenses: Expense[] = DUMMY_EXPENSES;
   const accounts: AccountSummary[] = DUMMY_ACCOUNTS;
@@ -58,8 +56,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode }) => {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <NavBar date={dayString} toggleDarkMode={toggleDarkMode} />
+    <AppLayout date={dayString} toggleDarkMode={toggleDarkModeFn}>
       <SectionList
         style={{ backgroundColor: colors.background }}
         contentContainerStyle={styles.container}
@@ -102,7 +99,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode }) => {
         removeClippedSubviews={true}
         keyboardShouldPersistTaps="handled"
       />
-    </View>
+    </AppLayout>
   );
 };
 

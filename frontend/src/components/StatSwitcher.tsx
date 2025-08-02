@@ -1,18 +1,41 @@
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { DUMMY_ACCOUNTS, DUMMY_EXPENSES } from '../utils/dummyData';
 
 const cardWidth = Dimensions.get('window').width - 40; // match HomeScreen horizontal padding
+
+
+
+
+// Calculate spending for a specific month (set to July for demo)
+// To use current month, replace 'selectedMonth' with: new Date().getMonth()
+const selectedMonth = 6; // July (0-based)
+const spending = DUMMY_EXPENSES
+  .filter(e => e.amount < 0 && e.date.getMonth() === selectedMonth)
+  .reduce((sum, e) => sum + Math.abs(e.amount), 0);
+
+// Calculate assets and liabilities from DUMMY_ACCOUNTS
+const assets = DUMMY_ACCOUNTS
+  .filter(a => a.type === 'Investment' || a.type === 'Checking' || a.type === 'Savings')
+  .reduce((sum, a) => sum + (a.balance > 0 ? a.balance : 0), 0);
+const liabilities = DUMMY_ACCOUNTS
+  .filter(a => a.type === 'Credit Card')
+  .reduce((sum, a) => sum + (a.balance < 0 ? Math.abs(a.balance) : 0), 0);
+const netWorth = assets - liabilities;
 
 const cards = [
   {
     title: 'Spending',
     desc: 'Your spending for the month',
-    amount: '-$1,234.56',
+    amount: `-$${spending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
   },
   {
     title: 'Net Worth',
-    desc: 'Your net worth is $45,678.90.',
+    amount: `$${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    assets: `$${assets.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    liabilities: `$${liabilities.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
   },
 ];
 
@@ -28,6 +51,9 @@ const StatSwitcher: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={[styles.card, { backgroundColor: colors.card }] }>
+        <TouchableOpacity style={styles.viewButton} accessibilityLabel="View">
+          <Text style={styles.viewButtonText}>View</Text>
+        </TouchableOpacity>
         {index === 0 ? (
           <>
             <Text style={[styles.spendingDesc, { color: colors.text }]}>{cards[0].desc}</Text>
@@ -36,7 +62,17 @@ const StatSwitcher: React.FC = () => {
         ) : (
           <>
             <Text style={[styles.cardTitle, { color: colors.text }]}>{cards[1].title}</Text>
-            <Text style={[styles.cardDesc, { color: colors.text }]}>{cards[1].desc}</Text>
+            <Text style={styles.netWorthAmount}>{cards[1].amount}</Text>
+            <View style={styles.netWorthDetailsRow}>
+              <View style={styles.netWorthDetailBox}>
+                <Text style={styles.netWorthDetailLabel}>Assets</Text>
+                <Text style={styles.netWorthDetailValue}>{cards[1].assets}</Text>
+              </View>
+              <View style={styles.netWorthDetailBox}>
+                <Text style={styles.netWorthDetailLabel}>Liabilities</Text>
+                <Text style={styles.netWorthDetailValue}>{cards[1].liabilities}</Text>
+              </View>
+            </View>
           </>
         )}
         <View style={styles.arrowRow}>
@@ -45,7 +81,6 @@ const StatSwitcher: React.FC = () => {
               <Text style={styles.arrowText}>{'<'}</Text>
             </TouchableOpacity>
           )}
-          <View style={{ flex: 1 }} />
           {index < cards.length - 1 && (
             <TouchableOpacity onPress={handleNext} style={styles.arrowButton} accessibilityLabel="Next card">
               <Text style={styles.arrowText}>{'>'}</Text>
@@ -73,9 +108,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 3,
-    minHeight: 140,
+    minHeight: 210, // Increased to fit all contents
+    maxHeight: 210,
+    height: 210,
     flexDirection: 'column',
     justifyContent: 'center',
+  },
+  netWorthDetailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 18,
+    paddingHorizontal: 12,
+  },
+  netWorthDetailBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  netWorthDetailLabel: {
+    fontSize: 13,
+    color: '#636e72',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  netWorthDetailValue: {
+    fontSize: 17,
+    color: '#00b894',
+    fontWeight: 'bold',
   },
   cardTitle: {
     fontSize: 15,
@@ -92,23 +151,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   arrowRow: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    width: '100%',
-    marginTop: 8,
+    alignItems: 'flex-end',
+    padding: 12,
+    zIndex: 2,
   },
   arrowButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 14,
     backgroundColor: '#e0e0e0',
-    marginHorizontal: 4,
+    marginRight: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
   arrowText: {
-    fontSize: 22,
+    fontSize: 16,
     color: '#444',
     fontWeight: 'bold',
   },
@@ -124,6 +185,29 @@ const styles = StyleSheet.create({
     color: '#e17055',
     textAlign: 'center',
     fontWeight: 'bold',
+  },
+  netWorthAmount: {
+    fontSize: 32,
+    color: '#0984e3',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginTop: 8,
+  },
+  viewButton: {
+    position: 'absolute',
+    top: 12,
+    right: 16,
+    zIndex: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 12,
+  },
+  viewButtonText: {
+    fontSize: 14,
+    color: '#444',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });
 

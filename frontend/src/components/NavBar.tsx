@@ -5,9 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 
 interface NavBarProps {
-  date: string;
+  date?: string;
   onSettingsPress?: () => void;
-  toggleDarkMode: () => void;
+  toggleDarkMode?: () => void;
 }
 
 const NavBar: React.FC<NavBarProps> = ({ date, onSettingsPress, toggleDarkMode }) => {
@@ -20,7 +20,7 @@ const NavBar: React.FC<NavBarProps> = ({ date, onSettingsPress, toggleDarkMode }
         </TouchableOpacity>
         <Text style={[styles.date, { color: colors.text }]}>{date}</Text>
         <TouchableOpacity
-          onPress={toggleDarkMode}
+          onPress={toggleDarkMode || (() => {})}
           style={styles.iconButton}
           accessibilityLabel="Toggle dark mode"
         >

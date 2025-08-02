@@ -7,9 +7,9 @@ export interface TransactionSection {
 
 /**
  * Filters, slices, and groups transactions for display.
- * @param expenses All expenses
+ * @param expenses All expenses (pre-filtered if needed)
  * @param accounts All accounts
- * @param maxCount Max number of transactions to show (default 25)
+ * @param maxCount Max number of transactions to show (default 25, pass expenses.length to show all)
  * @returns Array of sections, each with a title (date string) and data (Expense[])
  */
 export function getDisplayTransactionSections(
