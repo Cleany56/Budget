@@ -1,28 +1,15 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { ObjectId } from 'mongodb';
 
-export interface IExpense extends Document {
+export interface Transaction {
+  _id?: ObjectId;
   title: string;
   amount: number;
   date: Date;
   category: string;
   notes?: string;
-  userId: string; // For future user authentication
+  accountId?: string;
+  userId: string;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
 }
-
-const ExpenseSchema: Schema = new Schema(
-  {
-    title: { type: String, required: true },
-    amount: { type: Number, required: true },
-    date: { type: Date, required: true },
-    category: { type: String, required: true },
-    notes: { type: String },
-    userId: { type: String, required: true }
-  },
-  {
-    timestamps: true
-  }
-);
-
-export default mongoose.model<IExpense>('Expense', ExpenseSchema);
