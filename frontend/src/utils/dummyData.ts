@@ -1,4 +1,69 @@
-import { AccountSummary } from '../types';
+import { AccountSummary, Budget, Goal, ExpenseCategory } from '../types';
+
+export const DUMMY_BUDGETS: Budget[] = [
+  {
+    id: 'b1',
+    name: 'Monthly Groceries',
+    category: ExpenseCategory.FOOD,
+    amount: 600,
+    spent: 420,
+    month: 'August 2025',
+    isRecurring: false
+  },
+  {
+    id: 'b2',
+    name: 'Entertainment',
+    category: ExpenseCategory.ENTERTAINMENT,
+    amount: 200,
+    spent: 75,
+    month: 'August 2025',
+    isRecurring: false
+  },
+  {
+    id: 'b3',
+    name: 'Transportation',
+    category: ExpenseCategory.TRANSPORT,
+    amount: 300,
+    spent: 285,
+    month: 'August 2025',
+    isRecurring: false
+  },
+  {
+    id: 'b4',
+    name: 'Recurring Utilities',
+    category: ExpenseCategory.UTILITIES,
+    amount: 250,
+    spent: 180,
+    isRecurring: true
+  }
+];
+
+export const DUMMY_GOALS: Goal[] = [
+  {
+    id: 'g1',
+    name: 'Emergency Fund',
+    targetAmount: 10000,
+    currentAmount: 5500,
+    targetDate: '2025-12-31',
+    priority: 'high'
+  },
+  {
+    id: 'g2',
+    name: 'Vacation to Europe',
+    targetAmount: 3000,
+    currentAmount: 1200,
+    targetDate: '2026-03-15',
+    priority: 'medium'
+  },
+  {
+    id: 'g3',
+    name: 'New Car',
+    targetAmount: 15000,
+    currentAmount: 3750,
+    targetDate: '2026-09-01',
+    priority: 'low'
+  }
+];
 
 export const DUMMY_ACCOUNTS: AccountSummary[] = [
   // Primary accounts
@@ -125,7 +190,7 @@ export const ACCOUNT_HISTORY_2025 = {
   'a8': RETIREMENT_401K_BALANCES_2025,
 };
 
-import { Expense, ExpenseCategory } from '../types';
+import { Expense } from '../types';
 
 // Mock data for testing and development
 // JavaScript Date months are 0-based, so 0 = January, 4 = May, 5 = June, 6 = July, 7 = August

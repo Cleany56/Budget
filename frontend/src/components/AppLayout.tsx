@@ -8,18 +8,22 @@ interface AppLayoutProps {
   children: ReactNode;
   date?: string;
   toggleDarkMode: () => void;
+  showBack?: boolean;
+  onBackPress?: () => void;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ 
   children, 
   date,
-  toggleDarkMode 
+  toggleDarkMode,
+  showBack,
+  onBackPress
 }) => {
   const { colors } = useTheme();
   
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <NavBar date={date} toggleDarkMode={toggleDarkMode} />
+      <NavBar date={date} toggleDarkMode={toggleDarkMode} showBack={showBack} onBackPress={onBackPress} />
       <View style={styles.content}>
         {children}
       </View>

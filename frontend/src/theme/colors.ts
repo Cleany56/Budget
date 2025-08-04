@@ -8,6 +8,9 @@ export const lightColors = {
   secondary: '#eaf6fb',
   accent: '#2e86de',
   muted: '#888',
+  success: '#00b894',
+  warning: '#ffa801',
+  error: '#ff5e57',
 };
 
 export const darkColors = {
@@ -19,6 +22,9 @@ export const darkColors = {
   secondary: '#222',
   accent: '#0984e3',
   muted: '#bbb',
+  success: '#00b894',
+  warning: '#ffa801',
+  error: '#ff5e57',
 };
 
 export type ThemeColors = typeof lightColors;

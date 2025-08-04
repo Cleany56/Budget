@@ -23,6 +23,18 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ onHomePress }) => {
     navigation.navigate('Transactions');
   };
   
+  const handleReportsPress = () => {
+    navigation.navigate('Reports');
+  };
+  
+  const handleProfilePress = () => {
+    navigation.navigate('Profile');
+  };
+  
+  const handleAddPress = () => {
+    navigation.navigate('AddOptions');
+  };
+
   return (
     <SafeAreaView edges={["bottom"]} style={{ backgroundColor: colors.background }}>
       <View style={[styles.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.border }] }>
@@ -40,13 +52,25 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ onHomePress }) => {
           style={styles.navIcon}
           onPress={handleTransactionsPress}
         />
-        <View style={[styles.plusWrapper, { backgroundColor: colors.background }]}> 
+        <View style={[styles.plusWrapper, { backgroundColor: colors.background }]} onTouchEnd={handleAddPress}> 
           <View style={[styles.plusCircle, { backgroundColor: colors.background, borderColor: colors.border }]}> 
             <Ionicons name="add" size={28} color={colors.text} style={styles.plusIcon} />
           </View>
         </View>
-        <Ionicons name="pie-chart-outline" size={28} color={colors.text} style={styles.navIcon} />
-        <Ionicons name="person-outline" size={28} color={colors.text} style={styles.navIcon} />
+        <Ionicons
+          name="pie-chart-outline"
+          size={28}
+          color={colors.text}
+          style={styles.navIcon}
+          onPress={handleReportsPress}
+        />
+        <Ionicons 
+          name="person-outline" 
+          size={28} 
+          color={colors.text} 
+          style={styles.navIcon}
+          onPress={handleProfilePress}
+        />
       </View>
     </SafeAreaView>
   );

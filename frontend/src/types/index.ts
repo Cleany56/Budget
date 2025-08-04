@@ -30,3 +30,22 @@ export enum ExpenseCategory {
   HOUSING = 'Housing',
   OTHER = 'Other',
 }
+
+export interface Budget {
+  id: string;
+  name: string;
+  category: ExpenseCategory;
+  amount: number;
+  spent: number;
+  month?: string;  // For monthly budgets
+  isRecurring: boolean;
+}
+
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate: string;
+  priority: 'high' | 'medium' | 'low';
+}

@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SectionList } from 'react-native';
-import { Expense, AccountSummary } from '../types';
+import { useNavigation } from '@react-navigation/native';
+import { Expense, AccountSummary, Budget, Goal } from '../types';
 import { AccountType } from '../types';
 import { DUMMY_EXPENSES, DUMMY_ACCOUNTS } from '../utils/dummyData';
 import { getDisplayTransactionSections } from '../utils/transactionUtils';
 import { mapToDisplayTransaction } from '../utils/transactionDisplay';
 import { getTransactionIconComponent } from '../utils/transactionIcons';
-import AccountDropdown from '../components/AccountDropdown';
+import { getLatestBudgets, getLatestGoals } from '../utils/dataManagement';
+import AccountSummaryPanel from '../components/AccountSummaryPanel';
 import StatSwitcher from '../components/StatSwitcher';
+import HomeSection from '../components/HomeSection';
 import AppLayout from '../components/AppLayout';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -17,10 +20,34 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode: toggleDarkModeProp }) => {
   const { darkMode, colors, toggleDarkMode: themeToggleDarkMode } = useTheme();
+  const navigation = useNavigation();
   const toggleDarkModeFn = toggleDarkModeProp || themeToggleDarkMode;
   // Use dummy data for now
   const expenses: Expense[] = DUMMY_EXPENSES;
   const accounts: AccountSummary[] = DUMMY_ACCOUNTS;
+  
+  // Use state to manage budgets and goals so they can update
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  
+  // Load budgets and goals on component mount and on focus (when navigating back)
+  const loadData = () => {
+    setBudgets(getLatestBudgets(3)); // Get latest 3 budgets
+    setGoals(getLatestGoals(2));     // Get latest 2 goals
+  };
+  
+  useEffect(() => {
+    loadData();
+    
+    // Set up focus listener to reload data when navigating back to this screen
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadData();
+    });
+    
+    // Clean up listener on unmount
+    return unsubscribe;
+  }, [navigation]);
+  
   const groupedByDate = getDisplayTransactionSections(expenses, accounts, 10);
 
   // Group accounts by AccountType (not by name), so multiple accounts of the same type appear under the same dropdown
@@ -45,12 +72,26 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode: toggleDarkModeP
   const ListHeader = () => (
     <View>
       <StatSwitcher />
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Accounts</Text>
-      <View style={styles.accountDropdowns}>
-        {groupedAccounts.map(group => (
-          <AccountDropdown key={group.type} type={group.type} accounts={group.accounts} />
-        ))}
-      </View>
+      <AccountSummaryPanel accounts={accounts} />
+      
+      {/* Budgets Section */}
+      <HomeSection
+        title="My Budgets"
+        navigateTo="AddBudget"
+        icon="add"
+        colors={colors}
+        budgets={budgets.slice(0, 3)} // Show only 3 budgets for preview
+      />
+      
+      {/* Goals Section */}
+      <HomeSection
+        title="My Goals"
+        navigateTo="AddGoal"
+        icon="add"
+        colors={colors}
+        goals={goals.slice(0, 2)} // Show only 2 goals for preview
+      />
+      
       <Text style={[styles.sectionTitle, { color: colors.text }]}>Latest Transactions</Text>
     </View>
   );
