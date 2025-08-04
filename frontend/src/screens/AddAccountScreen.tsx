@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AppLayout from '../components/AppLayout';
 import { useTheme } from '../theme/ThemeContext';
 import { formatCurrency } from '../utils/formatters/index';
+import { createAccount } from '../services/api/accounts';
 
 type AccountType = 'Checking' | 'Savings' | 'Credit Card' | 'Investment' | 'Other';
 
@@ -34,7 +35,7 @@ const AddAccountScreen: React.FC = () => {
     setBalance(formattedValue);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Basic validation
     if (!accountName.trim()) {
       Alert.alert('Error', 'Please enter an account name');
@@ -46,13 +47,24 @@ const AddAccountScreen: React.FC = () => {
       return;
     }
 
-    // Here you would typically save the account to your data store
-    // For now, just show an alert and navigate back
-    Alert.alert(
-      'Success', 
-      `Account "${accountName}" created successfully!`,
-      [{ text: 'OK', onPress: () => navigation.navigate('Home') }]
-    );
+    try {
+      // Map 'Other' to 'Bank' for backend compatibility
+      const backendType = accountType === 'Other' ? 'Bank' : accountType;
+      await createAccount({
+        name: accountName,
+        type: backendType,
+        balance: parseFloat(balance),
+        currency,
+      });
+      Alert.alert(
+        'Success',
+        `Account "${accountName}" created successfully!`,
+        [{ text: 'OK', onPress: () => navigation.navigate('Home') }]
+      );
+    } catch (error) {
+      console.error('Failed to create account:', error);
+      Alert.alert('Error', 'Failed to create account.');
+    }
   };
 
   return (

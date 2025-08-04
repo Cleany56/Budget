@@ -193,9 +193,9 @@ const AccountSummaryPanel: React.FC<AccountSummaryPanelProps> = ({ accounts }) =
                 {accounts
                   .filter(account => account.type === item.type)
                   .map(account => (
-                    <View key={account.id} style={[styles.subAccountItem, { borderTopColor: colors.border }]}>
+                    <View key={`${item.id}-${account.id}`} style={[styles.subAccountItem, { borderTopColor: colors.border }]}> 
                       <Text style={[styles.subAccountName, { color: colors.text }]}>{account.name}</Text>
-                      <Text style={[styles.subAccountBalance, { color: colors.text }]}>
+                      <Text style={[styles.subAccountBalance, { color: colors.text }]}> 
                         {formatCurrency(account.balance)}
                       </Text>
                     </View>
