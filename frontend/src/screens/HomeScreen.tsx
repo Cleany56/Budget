@@ -1,42 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SectionList } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Expense, AccountSummary, Budget, Goal } from '../types';
-import { AccountType } from '../types';
-import { DUMMY_EXPENSES, DUMMY_ACCOUNTS } from '../utils/dummyData';
-import { getDisplayTransactionSections } from '../utils/transactionUtils';
-import { mapToDisplayTransaction } from '../utils/transactionDisplay';
-import { getTransactionIconComponent } from '../utils/transactionIcons';
-import { getLatestBudgets, getLatestGoals } from '../utils/dataManagement';
-import AccountSummaryPanel from '../components/AccountSummaryPanel';
-import StatSwitcher from '../components/StatSwitcher';
-import HomeSection from '../components/HomeSection';
 import AppLayout from '../components/AppLayout';
 import { useTheme } from '../theme/ThemeContext';
+import { HomeHeader } from '../components/HomeHeader';
+import { TransactionList } from '../components/TransactionList';
+import { useHomeData } from '../hooks/useHomeData';
 
 interface HomeScreenProps {
   toggleDarkMode?: () => void;
 }
 
+/**
+ * Main HomeScreen component with optimized structure and API integration
+ */
 const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode: toggleDarkModeProp }) => {
-  const { darkMode, colors, toggleDarkMode: themeToggleDarkMode } = useTheme();
+  const { colors, toggleDarkMode: themeToggleDarkMode } = useTheme();
   const navigation = useNavigation();
   const toggleDarkModeFn = toggleDarkModeProp || themeToggleDarkMode;
-  // Use dummy data for now
-  const expenses: Expense[] = DUMMY_EXPENSES;
-  const accounts: AccountSummary[] = DUMMY_ACCOUNTS;
   
-  // Use state to manage budgets and goals so they can update
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [goals, setGoals] = useState<Goal[]>([]);
-  
-  // Load budgets and goals on component mount and on focus (when navigating back)
-  const loadData = () => {
-    setBudgets(getLatestBudgets(3)); // Get latest 3 budgets
-    setGoals(getLatestGoals(2));     // Get latest 2 goals
-  };
+  // Use custom hook for data fetching and state management
+  const { 
+    data: { expenses, accounts, budgets, goals },
+    loading,
+    error,
+    loadData
+  } = useHomeData();
   
   useEffect(() => {
+    // Initial data load
     loadData();
     
     // Set up focus listener to reload data when navigating back to this screen
@@ -46,21 +38,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode: toggleDarkModeP
     
     // Clean up listener on unmount
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, loadData]);
   
-  const groupedByDate = getDisplayTransactionSections(expenses, accounts, 10);
-
-  // Group accounts by AccountType (not by name), so multiple accounts of the same type appear under the same dropdown
-  
-  const accountTypes: AccountType[] = ['Bank', 'Investment', 'Credit Card', 'Checking', 'Savings'];
-  const groupedAccounts = accountTypes
-    .map(type => ({
-      type,
-      accounts: accounts.filter(acc => acc.type === type)
-    }))
-    .filter(group => group.accounts.length > 0);
-
-  // FlatList header with dropdowns and summary
   // Get current day string
   const today = new Date();
   const dayString = today.toLocaleDateString(undefined, {
@@ -69,77 +48,33 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode: toggleDarkModeP
     day: 'numeric',
   });
 
-  const ListHeader = () => (
-    <View>
-      <StatSwitcher />
-      <AccountSummaryPanel accounts={accounts} />
-      
-      {/* Budgets Section */}
-      <HomeSection
-        title="My Budgets"
-        navigateTo="AddBudget"
-        icon="add"
-        colors={colors}
-        budgets={budgets.slice(0, 3)} // Show only 3 budgets for preview
-      />
-      
-      {/* Goals Section */}
-      <HomeSection
-        title="My Goals"
-        navigateTo="AddGoal"
-        icon="add"
-        colors={colors}
-        goals={goals.slice(0, 2)} // Show only 2 goals for preview
-      />
-      
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Latest Transactions</Text>
-    </View>
-  );
-
   return (
     <AppLayout date={dayString} toggleDarkMode={toggleDarkModeFn}>
-      <SectionList
-        style={{ backgroundColor: colors.background }}
-        contentContainerStyle={styles.container}
-        sections={groupedByDate}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={<View style={{ paddingHorizontal: 20, paddingTop: 20 }}>{ListHeader()}</View>}
-        renderSectionHeader={({ section: { title } }) => (
-          <View style={[styles.dateLabelContainer, { backgroundColor: colors.card, shadowColor: colors.text + '22', marginLeft: 20 }] }>
-            <Text style={[styles.dateLabelText, { color: colors.text }]}>{title}</Text>
-          </View>
-        )}
-        renderItem={({ item }) => {
-          const tx = mapToDisplayTransaction(item);
-          const amountColor = tx.isExpense ? '#e17055' : '#27ae60';
-          const IconComponent = getTransactionIconComponent(tx.type);
-          // Use theme card color for icon background
-          const iconBoxBg = colors.card;
-          // Use theme muted color for notes text
-          const notesColor = colors.muted;
-          return (
-            <View style={[styles.expenseItem, { borderBottomColor: colors.border, marginHorizontal: 20 }] }>
-              <View style={[styles.iconBox, { backgroundColor: iconBoxBg }] }>
-                {typeof IconComponent === 'function' ? (
-                  <IconComponent width={24} height={24} />
-                ) : null}
-              </View>
-              <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Text style={[styles.expenseTitle, { color: colors.text }]}>{tx.merchant}</Text>
-                {item.notes ? (
-                  <Text style={[styles.expenseType, { color: notesColor }]} numberOfLines={1}>{item.notes}</Text>
-                ) : null}
-              </View>
-              <Text style={[styles.expenseAmount, { color: amountColor }]}>{tx.sign}${tx.amount.toFixed(2)}</Text>
-            </View>
-          );
-        }}
-        stickySectionHeadersEnabled={false}
-        initialNumToRender={10}
-        windowSize={5}
-        removeClippedSubviews={true}
-        keyboardShouldPersistTaps="handled"
-      />
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+      >
+        <HomeHeader 
+          accounts={accounts}
+          budgets={budgets}
+          goals={goals}
+          loading={loading}
+          error={error}
+          colors={colors}
+          onDataRefresh={loadData}
+        />
+        
+        {/* Transactions List */}
+        <TransactionList 
+          expenses={expenses}
+          accounts={accounts}
+          loading={loading.expenses}
+          error={error.expenses}
+          onRetry={loadData}
+        />
+      </ScrollView>
     </AppLayout>
   );
 };
@@ -239,28 +174,14 @@ const styles = StyleSheet.create({
     // color is set inline from colors.textTertiary
     fontStyle: 'italic',
   },
-  dateLabelContainer: {
-    alignSelf: 'flex-start',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    marginTop: 16,
-    marginBottom: 4,
-    marginLeft: 2,
-    // backgroundColor is set inline from colors.card
-    elevation: 2,
-    // shadowColor is set inline from colors.shadow
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+  scrollView: {
+    flex: 1,
+    width: '100%',
   },
-  dateLabelText: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    letterSpacing: 0.2,
-    // color is set inline from colors.text
-  },
-// IMPORTANT: For every new component, always use theme colors from the colors object for all color and backgroundColor styles.
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  }
 });
 
 export default HomeScreen;

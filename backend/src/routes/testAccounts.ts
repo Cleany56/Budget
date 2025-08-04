@@ -10,7 +10,7 @@ const router = express.Router();
 router.post('/add-test-accounts', async (req, res) => {
   try {
     const realm = await getRealm();
-    const userId = 'user123'; // Default test user
+    const userId = req.query.userId as string || 'user123'; // Use query param or default test user
     
     // Array of test accounts to create
     const testAccounts = [
@@ -77,11 +77,11 @@ router.post('/add-test-accounts', async (req, res) => {
 router.post('/clear-accounts', async (req, res) => {
   try {
     const realm = await getRealm();
-    const userId = 'user123'; // Default test user
+    const userId = req.query.userId as string || 'user123'; // Use query param or default test user
     
     // Soft delete all accounts by marking them as deleted
     realm.write(() => {
-      const accounts = realm.objects('Account');
+      const accounts = realm.objects('Account').filtered('userId == $0', userId);
       accounts.forEach(account => {
         account.isDeleted = true;
       });
@@ -89,7 +89,7 @@ router.post('/clear-accounts', async (req, res) => {
     
     res.status(200).json({
       message: 'All accounts have been cleared (marked as deleted)',
-      deletedCount: realm.objects('Account').filtered('isDeleted == true').length
+      deletedCount: realm.objects('Account').filtered('isDeleted == true AND userId == $0', userId).length
     });
   } catch (error) {
     console.error('Error clearing accounts:', error);
