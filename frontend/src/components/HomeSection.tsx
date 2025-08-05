@@ -65,13 +65,13 @@ const HomeSection: React.FC<HomeSectionProps> = ({
       )}
       
       {((budgets && budgets.length === 0) || (goals && goals.length === 0)) && (
-        <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}> 
           <Ionicons 
             name={navigateTo === 'AddBudget' ? 'wallet-outline' : 'flag-outline'} 
             size={24} 
-            color={colors.secondary} 
+            color={colors.text} 
           />
-          <Text style={[styles.emptyText, { color: colors.secondary }]}>
+          <Text style={[styles.emptyText, { color: colors.text }]}> 
             {navigateTo === 'AddBudget' 
               ? 'No budgets yet. Add your first budget!' 
               : 'No goals yet. Add your first goal!'

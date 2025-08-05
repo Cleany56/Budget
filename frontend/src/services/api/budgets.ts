@@ -79,9 +79,26 @@ export const getBudget = async (budgetId: string): Promise<Budget> => {
 /**
  * Create a new budget
  */
-export const createBudget = async (budget: Omit<Budget, 'id'>): Promise<Budget> => {
+export const createBudget = async (budget: Omit<Budget, 'id'> & { userId?: string }): Promise<Budget> => {
   try {
-    const response = await apiClient.post('/budgets', budget);
+    // Prepare the data for the backend
+    // We make sure to include the userId and clean up any potential issues
+    const { id, ...restBudget } = budget as any; // Remove any id if it exists
+    
+    const budgetData = {
+      ...restBudget,
+      // Ensure userId is a string
+      userId: budget.userId || 'user123',
+      // Ensure category is passed as a string
+      category: budget.category.toString()
+    };
+    
+    // Make sure we don't send _id field - let the backend create it
+    if (budgetData._id) {
+      delete budgetData._id;
+    }
+    
+    const response = await apiClient.post('/budgets', budgetData);
     return transformBudget(response.data);
   } catch (error) {
     console.error('Error creating budget:', error);
