@@ -31,13 +31,23 @@ const HomeSection: React.FC<HomeSectionProps> = ({
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
-        <TouchableOpacity 
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
-          onPress={() => navigation.navigate(navigateTo)}
-        >
-          <Ionicons name={icon} size={16} color="white" />
-          <Text style={styles.addButtonText}>Add</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          {title === 'Goals' && goals && goals.length > 0 && (
+            <TouchableOpacity 
+              style={[styles.seeAllButton, { borderColor: colors.primary }]}
+              onPress={() => navigation.navigate('Goals')}
+            >
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>See all</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity 
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.navigate(navigateTo)}
+          >
+            <Ionicons name={icon} size={16} color="white" />
+            <Text style={styles.addButtonText}>Add</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       
       {budgets && budgets.length > 0 && (
@@ -96,6 +106,21 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  seeAllButton: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 8,
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   addButton: {
     flexDirection: 'row',

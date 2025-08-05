@@ -192,14 +192,18 @@ const AccountSummaryPanel: React.FC<AccountSummaryPanelProps> = ({ accounts }) =
               <View style={styles.expandedContent}>
                 {accounts
                   .filter(account => account.type === item.type)
-                  .map((account, index) => (
-                    <View key={`${item.id}-${account.id || account.name || index}`} style={[styles.subAccountItem, { borderTopColor: colors.border }]}> 
-                      <Text style={[styles.subAccountName, { color: colors.text }]}>{account.name}</Text>
-                      <Text style={[styles.subAccountBalance, { color: colors.text }]}> 
-                        {formatCurrency(account.balance)}
-                      </Text>
-                    </View>
-                  ))
+                  .map((account, index) => {
+                    // Ensure we always have a unique and stable key by using multiple fallbacks
+                    const accountKey = account.id || `account-${account.name}-${index}`;
+                    return (
+                      <View key={`${item.id}-${accountKey}`} style={[styles.subAccountItem, { borderTopColor: colors.border }]}> 
+                        <Text style={[styles.subAccountName, { color: colors.text }]}>{account.name}</Text>
+                        <Text style={[styles.subAccountBalance, { color: colors.text }]}> 
+                          {formatCurrency(account.balance)}
+                        </Text>
+                      </View>
+                    );
+                  })
                 }
               </View>
             )}

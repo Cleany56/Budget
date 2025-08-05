@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,10 +9,13 @@ import AppLayout from '../components/AppLayout';
 import { useTheme } from '../theme/ThemeContext';
 import { addGoal, createNewGoal } from '../utils/dataManagement';
 import { handleCurrencyInput, formatCurrencyOnBlur, normalizeCurrencyInput } from '../utils/formatters';
+import { useRoute, RouteProp } from '@react-navigation/native';
 
 const AddGoalScreen: React.FC = () => {
   const { colors, toggleDarkMode } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'AddGoal'>>();
+  const fromGoalsScreen = route.params?.fromGoalsScreen;
   
   const [goalName, setGoalName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
@@ -24,7 +27,9 @@ const AddGoalScreen: React.FC = () => {
     navigation.goBack();
   };
   
-  const handleSaveGoal = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const handleSaveGoal = async () => {
     // Validate inputs
     if (!goalName.trim()) {
       Alert.alert('Error', 'Please enter a goal name');
@@ -41,23 +46,36 @@ const AddGoalScreen: React.FC = () => {
       return;
     }
     
-    // Parse numeric values
-    const parsedTargetAmount = parseFloat(targetAmount.replace(/,/g, ''));
-    const parsedCurrentAmount = currentAmount ? parseFloat(currentAmount.replace(/,/g, '')) : 0;
-    
-    // Create and save the new goal
-    const newGoal = createNewGoal(
-      goalName,
-      parsedTargetAmount,
-      parsedCurrentAmount,
-      targetDate,
-      priority
-    );
-    
-    addGoal(newGoal);
-    
-    // Navigate back
-    navigation.goBack();
+    try {
+      setIsSubmitting(true);
+      
+      // Parse numeric values
+      const parsedTargetAmount = parseFloat(targetAmount.replace(/,/g, ''));
+      const parsedCurrentAmount = currentAmount ? parseFloat(currentAmount.replace(/,/g, '')) : 0;
+      
+      // Create and save the new goal
+      const newGoal = createNewGoal(
+        goalName,
+        parsedTargetAmount,
+        parsedCurrentAmount,
+        targetDate,
+        priority
+      );
+      
+      await addGoal(newGoal);
+      
+      // Navigate back or to the Goals screen
+      if (route.params?.fromGoalsScreen) {
+        navigation.navigate('Goals');
+      } else {
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error('Failed to save goal:', error);
+      Alert.alert('Error', 'Failed to save goal. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -180,10 +198,20 @@ const AddGoalScreen: React.FC = () => {
           
           {/* Save button */}
           <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.primary }]}
+            style={[
+              styles.saveButton, 
+              { 
+                backgroundColor: isSubmitting ? colors.secondary : colors.primary,
+                opacity: isSubmitting ? 0.7 : 1
+              }
+            ]}
             onPress={handleSaveGoal}
+            disabled={isSubmitting}
           >
-            <Text style={[styles.saveButtonText, { color: 'white' }]}>Save Goal</Text>
+            <Text style={[styles.saveButtonText, { color: 'white' }]}>
+              {isSubmitting ? 'Saving...' : 'Save Goal'}
+            </Text>
+            {isSubmitting && <ActivityIndicator size="small" color="white" style={styles.loadingIndicator} />}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -264,11 +292,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 12,
+    flexDirection: 'row',
   },
   saveButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    marginRight: 8,
+  },
+  loadingIndicator: {
+    marginLeft: 8,
   },
 });
 

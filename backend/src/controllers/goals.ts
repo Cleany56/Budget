@@ -37,7 +37,8 @@ export class GoalController {
       const realm = await getRealm();
       const { id } = req.params;
       
-      const goal = realm.objectForPrimaryKey('Goal', new ObjectId(id));
+      // Use the ID directly as a string
+      const goal = realm.objectForPrimaryKey('Goal', id);
       
       if (!goal || goal.isDeleted) {
         res.status(404).json({ message: 'Goal not found' });
@@ -60,11 +61,12 @@ export class GoalController {
       const { name, targetAmount, currentAmount = 0, targetDate, priority = 'medium' } = req.body;
       const userId = req.body.userId || 'user123'; // Default for development
       
-      const newId = new ObjectId();
+      // Generate a new ObjectId and convert it to a string for Realm
+      const newIdString = new ObjectId().toString();
       
       realm.write(() => {
         realm.create<Goal>('Goal', {
-          _id: newId,
+          _id: newIdString,
           name,
           targetAmount,
           currentAmount,
@@ -77,7 +79,7 @@ export class GoalController {
         });
       });
       
-      const newGoal = realm.objectForPrimaryKey('Goal', newId);
+      const newGoal = realm.objectForPrimaryKey('Goal', newIdString);
       res.status(201).json(newGoal);
     } catch (error) {
       console.error('Error creating goal:', error);
@@ -94,7 +96,8 @@ export class GoalController {
       const { id } = req.params;
       const updates = req.body;
       
-      const goal = realm.objectForPrimaryKey('Goal', new ObjectId(id));
+      // Use the ID directly as a string
+      const goal = realm.objectForPrimaryKey('Goal', id);
       
       if (!goal || goal.isDeleted) {
         res.status(404).json({ message: 'Goal not found' });
@@ -126,7 +129,8 @@ export class GoalController {
       const realm = await getRealm();
       const { id } = req.params;
       
-      const goal = realm.objectForPrimaryKey('Goal', new ObjectId(id));
+      // Use the ID directly as a string
+      const goal = realm.objectForPrimaryKey('Goal', id);
       
       if (!goal || goal.isDeleted) {
         res.status(404).json({ message: 'Goal not found' });

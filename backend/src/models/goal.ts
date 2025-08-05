@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 
 export interface Goal {
-  _id?: ObjectId;
+  _id?: string; // Changed to string to match Realm schema
   name: string;
   targetAmount: number;
   currentAmount: number;

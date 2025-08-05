@@ -35,14 +35,25 @@ apiClient.interceptors.request.use((config) => {
   
   // For POST requests, add userId to the request body if it doesn't exist
   if (config.method === 'post' || config.method === 'put') {
-    if (config.data && typeof config.data === 'object') {
-      const data = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+    if (config.data) {
+      // Parse string data if necessary
+      let data = config.data;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {
+          console.error('Error parsing request data:', e);
+        }
+      }
+      
+      // Add userId if it doesn't exist
       if (!data.userId) {
         data.userId = DEV_USER_ID;
-        config.data = JSON.stringify(data);
+        // Convert back to string only if it was a string originally
+        config.data = typeof config.data === 'string' ? JSON.stringify(data) : data;
       }
     } else if (!config.data) {
-      config.data = JSON.stringify({ userId: DEV_USER_ID });
+      config.data = { userId: DEV_USER_ID };
     }
   }
   

@@ -10,6 +10,7 @@ import AddOptionsScreen from '../screens/AddOptionsScreen';
 import AddTransactionScreen from '../screens/AddTransactionScreen';
 import AddBudgetScreen from '../screens/AddBudgetScreen';
 import AddGoalScreen from '../screens/AddGoalScreen';
+import GoalsScreen from '../screens/GoalsScreen';
 import AddAccountScreen from '../screens/AddAccountScreen';
 import DebtCalculatorScreen from '../screens/DebtCalculatorScreen';
 import { useTheme } from '../theme/ThemeContext';
@@ -23,7 +24,8 @@ export type RootStackParamList = {
   AddOptions: undefined;
   AddTransaction: undefined;
   AddBudget: undefined;
-  AddGoal: undefined;
+  AddGoal: { fromGoalsScreen?: boolean } | undefined;
+  Goals: undefined;
   AddAccount: undefined;
   DebtCalculator: undefined;
 };
@@ -43,6 +45,7 @@ const AppNavigator: React.FC = () => {
         <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
         <Stack.Screen name="AddBudget" component={AddBudgetScreen} />
         <Stack.Screen name="AddGoal" component={AddGoalScreen} />
+        <Stack.Screen name="Goals" component={GoalsScreen} />
         <Stack.Screen name="AddAccount" component={AddAccountScreen} />
         <Stack.Screen name="DebtCalculator" component={DebtCalculatorScreen} />
       </Stack.Navigator>

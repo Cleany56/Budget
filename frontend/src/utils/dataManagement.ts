@@ -1,8 +1,9 @@
 import { Budget, Goal, ExpenseCategory } from '../types';
 import { DUMMY_BUDGETS, DUMMY_GOALS } from './dummyData';
+import { createGoal, updateGoal as updateGoalAPI, deleteGoal as deleteGoalAPI } from '../services/api/goals';
 
-// In a real app, these would interact with a database, localStorage, or API
-// For this demo, we'll just use in-memory storage
+// This file provides a unified interface for data management
+// It uses API services for persistence while maintaining local state for UI updates
 
 let budgets = [...DUMMY_BUDGETS];
 let goals = [...DUMMY_GOALS];
@@ -54,26 +55,50 @@ export const getLatestGoals = (limit: number = 2): Goal[] => {
     .slice(0, limit);
 };
 
-export const addGoal = (goal: Omit<Goal, 'id'>): Goal => {
-  // Generate a unique ID (in a real app would be from the database)
-  const id = `g${goals.length + 1}`;
-  const newGoal: Goal = { ...goal, id };
-  
-  // Add to the beginning to show newest first
-  goals = [newGoal, ...goals];
-  
-  return newGoal;
+export const addGoal = async (goal: Omit<Goal, 'id'>): Promise<Goal> => {
+  try {
+    // Use the API service to create the goal
+    const newGoal = await createGoal(goal);
+    
+    // Update local state for immediate UI updates
+    goals = [newGoal, ...goals];
+    
+    return newGoal;
+  } catch (error) {
+    console.error('Error adding goal:', error);
+    throw error;
+  }
 };
 
-export const updateGoal = (goal: Goal): Goal => {
-  goals = goals.map(g => g.id === goal.id ? goal : g);
-  return goal;
+export const updateGoal = async (goal: Goal): Promise<Goal> => {
+  try {
+    // Use the API service to update the goal
+    const updatedGoal = await updateGoalAPI(goal.id, goal);
+    
+    // Update local state for immediate UI updates
+    goals = goals.map(g => g.id === goal.id ? updatedGoal : g);
+    
+    return updatedGoal;
+  } catch (error) {
+    console.error('Error updating goal:', error);
+    throw error;
+  }
 };
 
-export const deleteGoal = (id: string): boolean => {
-  const initialLength = goals.length;
-  goals = goals.filter(g => g.id !== id);
-  return goals.length < initialLength;
+export const deleteGoal = async (id: string): Promise<boolean> => {
+  try {
+    // Use the API service to delete the goal
+    await deleteGoalAPI(id);
+    
+    // Update local state for immediate UI updates
+    const initialLength = goals.length;
+    goals = goals.filter(g => g.id !== id);
+    
+    return goals.length < initialLength;
+  } catch (error) {
+    console.error('Error deleting goal:', error);
+    throw error;
+  }
 };
 
 // Helper to create a new budget object
