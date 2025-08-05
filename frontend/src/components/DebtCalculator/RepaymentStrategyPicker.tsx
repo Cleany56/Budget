@@ -24,8 +24,8 @@ const RepaymentStrategyPicker: React.FC<RepaymentStrategyPickerProps> = ({
           style={{ color: colors.text }}
           dropdownIconColor={colors.text}
         >
-          <Picker.Item label="Debt Avalanche (Highest Interest First)" value="avalanche" />
-          <Picker.Item label="Debt Snowball (Smallest Balance First)" value="snowball" />
+          <Picker.Item key="avalanche" label="Debt Avalanche (Highest Interest First)" value="avalanche" />
+          <Picker.Item key="snowball" label="Debt Snowball (Smallest Balance First)" value="snowball" />
         </Picker>
       </View>
     </View>

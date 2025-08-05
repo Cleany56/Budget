@@ -173,11 +173,11 @@ const AddAccountScreen: React.FC = () => {
                     style={[styles.picker, { color: colors.text }]}
                     dropdownIconColor={colors.text}
                   >
-                    <Picker.Item label="Checking" value="Checking" />
-                    <Picker.Item label="Savings" value="Savings" />
-                    <Picker.Item label="Credit Card" value="Credit Card" />
-                    <Picker.Item label="Investment" value="Investment" />
-                    <Picker.Item label="Other" value="Other" />
+                    <Picker.Item key="Checking" label="Checking" value="Checking" />
+                    <Picker.Item key="Savings" label="Savings" value="Savings" />
+                    <Picker.Item key="Credit Card" label="Credit Card" value="Credit Card" />
+                    <Picker.Item key="Investment" label="Investment" value="Investment" />
+                    <Picker.Item key="Other" label="Other" value="Other" />
                   </Picker>
                 </View>
               </View>
@@ -192,12 +192,12 @@ const AddAccountScreen: React.FC = () => {
                     style={[styles.picker, { color: colors.text }]}
                     dropdownIconColor={colors.text}
                   >
-                    <Picker.Item label="USD ($)" value="USD" />
-                    <Picker.Item label="EUR (€)" value="EUR" />
-                    <Picker.Item label="GBP (£)" value="GBP" />
-                    <Picker.Item label="CAD (C$)" value="CAD" />
-                    <Picker.Item label="AUD (A$)" value="AUD" />
-                    <Picker.Item label="JPY (¥)" value="JPY" />
+                    <Picker.Item key="USD" label="USD ($)" value="USD" />
+                    <Picker.Item key="EUR" label="EUR (€)" value="EUR" />
+                    <Picker.Item key="GBP" label="GBP (£)" value="GBP" />
+                    <Picker.Item key="CAD" label="CAD (C$)" value="CAD" />
+                    <Picker.Item key="AUD" label="AUD (A$)" value="AUD" />
+                    <Picker.Item key="JPY" label="JPY (¥)" value="JPY" />
                   </Picker>
                 </View>
               </View>

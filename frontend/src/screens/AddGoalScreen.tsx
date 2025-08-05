@@ -171,9 +171,9 @@ const AddGoalScreen: React.FC = () => {
                 selectedValue={priority}
                 onValueChange={(itemValue) => setPriority(itemValue as 'high' | 'medium' | 'low')}
               >
-                <Picker.Item label="High" value="high" />
-                <Picker.Item label="Medium" value="medium" />
-                <Picker.Item label="Low" value="low" />
+                <Picker.Item key="high" label="High" value="high" />
+                <Picker.Item key="medium" label="Medium" value="medium" />
+                <Picker.Item key="low" label="Low" value="low" />
               </Picker>
             </View>
           </View>
