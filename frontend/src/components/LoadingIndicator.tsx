@@ -5,13 +5,15 @@ import { TransactionSkeleton, AccountSummarySkeleton } from './SkeletonLoader';
 
 interface LoadingIndicatorProps {
   type?: 'transaction' | 'account' | 'default' | 'data';
+  size?: 'small' | 'large'; // Add size prop
 }
 
 /**
  * Reusable loading indicator with skeleton UI options
  */
 export const LoadingIndicator: React.FC<LoadingIndicatorProps> = React.memo(({ 
-  type = "default" 
+  type = "default",
+  size 
 }) => {
   const { colors } = useTheme();
   
@@ -36,7 +38,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = React.memo(({
   // Default loader
   return (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color={colors.primary} />
+      <ActivityIndicator size={type === "data" || size === "small" ? "small" : "large"} color={colors.primary} />
       <Text style={[styles.loadingText, { color: colors.text }]}>Loading data...</Text>
     </View>
   );

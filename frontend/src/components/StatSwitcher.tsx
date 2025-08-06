@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { AccountSummary } from '../types';
 import { LoadingIndicator } from './LoadingIndicator';
 import { ErrorMessage } from './ErrorMessage';
+import { getMonthlySpending } from '../services/api/transactions';
 import { formatAsCurrency } from '../utils/formatters';
 
 // Props interface
@@ -22,10 +23,42 @@ const cardWidth = Dimensions.get('window').width - 40; // match HomeScreen horiz
 const StatSwitcher: React.FC<StatSwitcherProps> = ({ accounts, isLoading, error }) => {
   const { colors } = useTheme();
   const [index, setIndex] = useState(0);
+  const [spendingData, setSpendingData] = useState({
+    totalSpending: 0,
+    transactionCount: 0,
+    isLoading: true,
+    error: null as string | null
+  });
   
-  // Calculate current month spending (placeholder)
+  // Get current month name for display
   const currentMonth = new Date().toLocaleString('default', { month: 'long' });
-  const spending = 2458.75; // Will be calculated from transactions in a real app
+  
+  // Fetch monthly spending data
+  useEffect(() => {
+    const fetchMonthlySpending = async () => {
+      try {
+        setSpendingData(prev => ({ ...prev, isLoading: true, error: null }));
+        const data = await getMonthlySpending();
+        console.log('Monthly spending data:', data);
+        
+        setSpendingData({
+          totalSpending: data.totalSpending,
+          transactionCount: data.transactionCount,
+          isLoading: false,
+          error: null
+        });
+      } catch (err) {
+        console.error('Error fetching monthly spending:', err);
+        setSpendingData(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          error: 'Failed to load spending data'
+        }));
+      }
+    };
+    
+    fetchMonthlySpending();
+  }, []);
   
   // Calculate assets and liabilities from accounts with debug logs
   console.log('StatSwitcher received accounts:', accounts);
@@ -49,7 +82,9 @@ const StatSwitcher: React.FC<StatSwitcherProps> = ({ accounts, isLoading, error 
     {
       title: 'Spending',
       desc: `Your ${currentMonth} spending`,
-      amount: formatAsCurrency(spending),
+      amount: formatAsCurrency(spendingData.totalSpending),
+      isLoading: spendingData.isLoading,
+      error: spendingData.error,
     },
     {
       title: 'Net Worth',
@@ -88,7 +123,17 @@ const StatSwitcher: React.FC<StatSwitcherProps> = ({ accounts, isLoading, error 
         {index === 0 ? (
           <>
             <Text style={[styles.spendingDesc, { color: colors.text }]}>{cards[0].desc}</Text>
-            <Text style={[styles.spendingAmount, { color: colors.error }]}>{cards[0].amount}</Text>
+            {cards[0].isLoading ? (
+              <View style={styles.loadingContainer}>
+                <LoadingIndicator size="small" />
+              </View>
+            ) : cards[0].error ? (
+              <Text style={[styles.errorText, { color: colors.error }]}>
+                Error loading data
+              </Text>
+            ) : (
+              <Text style={[styles.spendingAmount, { color: colors.error }]}>{cards[0].amount}</Text>
+            )}
           </>
         ) : (
           <>
@@ -239,6 +284,11 @@ const styles = StyleSheet.create({
     color: '#444',
     fontWeight: 'bold',
     letterSpacing: 0.5,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginVertical: 10,
   },
 });
 

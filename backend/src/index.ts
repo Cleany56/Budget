@@ -35,6 +35,7 @@ app.use('/api/goals', goalRoutes);
 app.use('/api/test-data', testDataRoutes);
 app.use('/api/test-accounts', testAccountsRoutes);
 app.use('/api/fix-accounts', fixAccountsRoutes); // Dedicated route for fixing accounts
+app.use('/api/diagnose-accounts', diagnoseAccountsRoutes); // Diagnostic route for accounts
 app.use('/api/diagnose-accounts', diagnoseAccountsRoutes); // Diagnostic endpoint for accounts
 
 // Health check route

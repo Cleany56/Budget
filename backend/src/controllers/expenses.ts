@@ -483,3 +483,61 @@ export const getExpensesByAccount = async (req: Request, res: Response): Promise
     res.status(500).json({ message: 'Failed to fetch expenses for account', error });
   }
 };
+
+/**
+ * Get total spending for the current month (negative transactions only)
+ */
+export const getMonthlySpending = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const realm = await getRealm();
+    const userId = req.query.userId as string || 'user123'; // Default for development
+    
+    // Calculate start and end dates for the current month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    // Override dates if provided in query params
+    const startDate = req.query.startDate ? new Date(req.query.startDate as string) : startOfMonth;
+    const endDate = req.query.endDate ? new Date(req.query.endDate as string) : endOfMonth;
+    
+    console.log(`Calculating spending from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    
+    // Filter for negative transactions (spending) within the date range
+    const transactions = realm.objects('Transaction')
+      .filtered('userId == $0 && isDeleted == false && amount < 0 && date >= $1 && date <= $2', 
+        userId, startDate, endDate);
+    
+    // Calculate total spending (negate the sum to get a positive value)
+    let totalSpending = 0;
+    transactions.forEach((transaction: any) => {
+      totalSpending += Math.abs(transaction.amount);
+    });
+    
+    // Get transaction count
+    const transactionCount = transactions.length;
+    
+    // Additional details for the response
+    const formattedStartDate = startDate.toISOString().split('T')[0];
+    const formattedEndDate = endDate.toISOString().split('T')[0];
+    
+    res.status(200).json({
+      totalSpending,
+      transactionCount,
+      period: {
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        isCurrentMonth: (
+          startDate.getMonth() === now.getMonth() && 
+          startDate.getFullYear() === now.getFullYear()
+        )
+      }
+    });
+  } catch (error) {
+    console.error('Error in getMonthlySpending:', error);
+    res.status(500).json({ 
+      message: 'Failed to calculate monthly spending', 
+      error: (error as Error).message 
+    });
+  }
+};

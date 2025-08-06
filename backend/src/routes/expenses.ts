@@ -5,8 +5,9 @@ import {
   createExpense,
   updateExpense,
   deleteExpense,
-  bulkCreateExpenses,  // We'll add this function
-  getExpensesByAccount  // We'll add this function too
+  bulkCreateExpenses,
+  getExpensesByAccount,
+  getMonthlySpending  // Add the new function
 } from '../controllers/expenses';
 
 const router = Router();
@@ -22,6 +23,10 @@ router.route('/bulk')
 // New endpoint for getting expenses by account
 router.route('/by-account/:accountId')
   .get(getExpensesByAccount);
+
+// Endpoint for getting monthly spending (negative transactions)
+router.route('/monthly-spending')
+  .get(getMonthlySpending);
 
 router.route('/:id')
   .get(getExpenseById)

@@ -220,3 +220,44 @@ export const deleteTransaction = async (id: string): Promise<void> => {
     throw error;
   }
 };
+
+/**
+ * Get total spending for the current month (or specified date range)
+ */
+export const getMonthlySpending = async (
+  startDate?: Date, 
+  endDate?: Date
+): Promise<{ 
+  totalSpending: number, 
+  transactionCount: number, 
+  period: { 
+    startDate: string, 
+    endDate: string, 
+    isCurrentMonth: boolean 
+  } 
+}> => {
+  try {
+    let url = '/expenses/monthly-spending';
+    const params = new URLSearchParams();
+    
+    if (startDate) {
+      params.append('startDate', startDate.toISOString());
+    }
+    
+    if (endDate) {
+      params.append('endDate', endDate.toISOString());
+    }
+    
+    // Add parameters if any were specified
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    console.log(`Fetching monthly spending with URL: ${url}`);
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching monthly spending:', error);
+    throw error;
+  }
+};
