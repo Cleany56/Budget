@@ -193,8 +193,11 @@ const AccountSummaryPanel: React.FC<AccountSummaryPanelProps> = ({ accounts }) =
                 {accounts
                   .filter(account => account.type === item.type)
                   .map((account, index) => {
-                    // Ensure we always have a unique and stable key by using multiple fallbacks
-                    const accountKey = account.id || `account-${account.name}-${index}`;
+                    // Create a guaranteed unique key combining multiple identifiers
+                    // Using index as part of the key ensures uniqueness even with identical accounts
+                    const accountKey = account.id 
+                      ? `${account.id}-${index}` 
+                      : `account-${account.type}-${account.name}-${index}`;
                     return (
                       <View key={`${item.id}-${accountKey}`} style={[styles.subAccountItem, { borderTopColor: colors.border }]}> 
                         <Text style={[styles.subAccountName, { color: colors.text }]}>{account.name}</Text>

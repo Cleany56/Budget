@@ -185,7 +185,7 @@ const MonthDetailScreen: React.FC<any> = ({ route }) => {
           {/* Category legends with icons */}
           <View style={styles.legendContainer}>
             {pieData.filter(item => item.amount > 0).map((item, index, filteredItems) => (
-              <View key={item.name} style={[
+              <View key={`category-legend-${item.name}-${index}`} style={[
                 styles.legendItem, 
                 { 
                   // Only show bottom border if not the last item

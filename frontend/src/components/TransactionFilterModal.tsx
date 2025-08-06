@@ -211,9 +211,9 @@ const TransactionFilterModal: React.FC<TransactionFilterModalProps> = ({ visible
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Categories</Text>
               <View style={styles.optionsGrid}>
-                {categoryOptions.map(option => (
+                {categoryOptions.map((option, index) => (
                   <TouchableOpacity
-                    key={option.id}
+                    key={`category-${option.id || index}`}
                     style={[
                       styles.chip,
                       { 
@@ -240,9 +240,9 @@ const TransactionFilterModal: React.FC<TransactionFilterModalProps> = ({ visible
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Accounts</Text>
               <View style={styles.optionsGrid}>
-                {accountOptions.map(option => (
+                {accountOptions.map((option, index) => (
                   <TouchableOpacity
-                    key={option.id}
+                    key={`account-${option.id || index}`}
                     style={[
                       styles.chip,
                       { 

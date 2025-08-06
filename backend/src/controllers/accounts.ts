@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AccountRepository, CreateAccountDto, UpdateAccountDto } from '../repositories/accountRepository';
+import { formatAccountsForResponse } from '../utils/apiFormatters';
 
 // Initialize repository
 const accountRepository = new AccountRepository();
@@ -8,6 +9,34 @@ const accountRepository = new AccountRepository();
  * Account controller - handles HTTP requests for account operations
  */
 export class AccountController {
+  /**
+   * Fix any accounts with missing IDs for the current user
+   * This is a maintenance endpoint to help recover from data integrity issues
+   */
+  async fixAccountsWithMissingIds(req: Request, res: Response): Promise<void> {
+    try {
+      // In a real app, this would come from authentication middleware
+      const userId = req.query.userId as string || '1'; // Default to user ID '1'
+      
+      if (!userId) {
+        res.status(400).json({ message: 'User ID is required' });
+        return;
+      }
+      
+      console.log(`Attempting to fix accounts for user ${userId}`);
+      const fixedCount = await accountRepository.fixAccountsWithMissingIds(userId);
+      
+      // Return the number of accounts that were fixed
+      res.status(200).json({ 
+        message: `Fixed ${fixedCount} accounts with missing IDs`,
+        fixedCount 
+      });
+    } catch (error) {
+      console.error('Error in fixAccountsWithMissingIds:', error);
+      res.status(500).json({ message: 'Failed to fix accounts', error: (error as Error).message });
+    }
+  }
+  
   /**
    * Get all accounts for the current user
    */
@@ -23,7 +52,24 @@ export class AccountController {
       }
       
       const accounts = await accountRepository.getAllAccounts(userId);
-      res.status(200).json(accounts);
+      
+      // Format accounts to ensure consistent ID fields
+      const formattedAccounts = formatAccountsForResponse(accounts);
+      
+      // Add logging to verify account objects have IDs
+      console.log(`Returning ${formattedAccounts.length} accounts to client`);
+      formattedAccounts.forEach((account: any, index: number) => {
+        console.log(`Account ${index + 1}: ID=${account._id || account.id || 'missing'}, Name=${account.name}, Type=${account.type}`);
+        console.log(`  - _id field: ${account._id ? 'present' : 'MISSING'}`);
+        console.log(`  - id field: ${account.id ? 'present' : 'MISSING'}`);
+        
+        // Check for missing IDs and add warning
+        if (!account._id && !account.id) {
+          console.warn(`WARNING: Account "${account.name}" has no ID fields!`);
+        }
+      });
+      
+      res.status(200).json(formattedAccounts);
     } catch (error) {
       console.error('Error in getAllAccounts:', error);
       res.status(500).json({ message: 'Failed to retrieve accounts', error: (error as Error).message });
@@ -51,7 +97,15 @@ export class AccountController {
         return;
       }
       
-      res.status(200).json(account);
+      // Format account to ensure consistent ID fields
+      const formattedAccount = formatAccountsForResponse(account);
+      
+      // Log ID fields for debugging
+      console.log(`Returning account "${formattedAccount.name}" with ID fields:`);
+      console.log(`  - _id: ${formattedAccount._id || 'MISSING'}`);
+      console.log(`  - id: ${formattedAccount.id || 'MISSING'}`);
+      
+      res.status(200).json(formattedAccount);
     } catch (error) {
       console.error(`Error in getAccountById for ID ${req.params.id}:`, error);
       res.status(500).json({ message: 'Failed to retrieve account', error: (error as Error).message });
@@ -85,10 +139,14 @@ export class AccountController {
       
       const newAccount = await accountRepository.createAccount(accountData, userId);
       
-      // Log created account
-      console.log('Account created successfully:', newAccount);
+      // Format account to ensure consistent ID fields
+      const formattedAccount = formatAccountsForResponse(newAccount);
       
-      res.status(201).json(newAccount);
+      // Log created account with ID field information
+      console.log('Account created successfully:', formattedAccount);
+      console.log(`Account ID fields: _id=${formattedAccount._id || 'missing'}, id=${formattedAccount.id || 'missing'}`);
+      
+      res.status(201).json(formattedAccount);
     } catch (error) {
       console.error('Error in createAccount:', error);
       res.status(500).json({ message: 'Failed to create account', error: (error as Error).message });
@@ -124,7 +182,15 @@ export class AccountController {
         return;
       }
       
-      res.status(200).json(updatedAccount);
+      // Format account to ensure consistent ID fields
+      const formattedAccount = formatAccountsForResponse(updatedAccount);
+      
+      // Log updated account with ID field information
+      console.log(`Updated account "${formattedAccount.name}" with ID fields:`);
+      console.log(`  - _id: ${formattedAccount._id || 'MISSING'}`);
+      console.log(`  - id: ${formattedAccount.id || 'MISSING'}`);
+      
+      res.status(200).json(formattedAccount);
     } catch (error) {
       console.error(`Error in updateAccount for ID ${req.params.id}:`, error);
       res.status(500).json({ message: 'Failed to update account', error: (error as Error).message });

@@ -41,7 +41,28 @@ const transformTransaction = (transaction: BackendTransaction): Expense => {
 export const getTransactions = async (): Promise<Expense[]> => {
   try {
     const response = await apiClient.get('/expenses');
-    return response.data.map(transformTransaction);
+    
+    // Log the response structure to debug
+    console.log('Transactions response structure:', {
+      hasData: !!response.data?.data,
+      isPaginated: !!response.data?.pagination,
+      dataType: response.data?.data ? typeof response.data.data : 'N/A',
+      isArray: response.data?.data ? Array.isArray(response.data.data) : false
+    });
+    
+    // Handle paginated response (data property contains the actual transactions)
+    if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      return response.data.data.map(transformTransaction);
+    }
+    
+    // Handle direct array response (fallback for older API)
+    if (response.data && Array.isArray(response.data)) {
+      return response.data.map(transformTransaction);
+    }
+    
+    // If the response structure is unexpected, log and return empty array
+    console.error('Unexpected response structure from /expenses endpoint:', response.data);
+    return [];
   } catch (error) {
     console.error('Error fetching transactions:', error);
     throw error;
@@ -53,10 +74,35 @@ export const getTransactions = async (): Promise<Expense[]> => {
  */
 export const getAccountTransactions = async (accountId: string): Promise<Expense[]> => {
   try {
-    const response = await apiClient.get('/expenses', {
-      params: { accountId }
+    // Use the specific 'by-account' endpoint for better handling
+    const response = await apiClient.get(`/expenses/by-account/${accountId}`);
+    
+    console.log('Account transactions response:', {
+      hasData: !!response.data?.data,
+      hasAccount: !!response.data?.account,
+      isPaginated: !!response.data?.pagination,
+      dataLength: response.data?.data?.length
     });
-    return response.data.map(transformTransaction);
+    
+    // Handle paginated response (data property contains the actual transactions)
+    if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      return response.data.data.map(transformTransaction);
+    }
+    
+    // Handle direct array response (fallback for older API)
+    if (response.data && Array.isArray(response.data)) {
+      return response.data.map(transformTransaction);
+    }
+    
+    // Handle case where data might be empty but valid
+    if (response.data && response.data.data === null) {
+      console.log(`No transactions found for account ${accountId}`);
+      return [];
+    }
+    
+    // If the response structure is unexpected, log and return empty array
+    console.error('Unexpected response structure from /expenses/by-account endpoint:', response.data);
+    return [];
   } catch (error) {
     console.error(`Error fetching transactions for account ${accountId}:`, error);
     throw error;
@@ -71,7 +117,20 @@ export const getTransactionsByCategory = async (category: ExpenseCategory): Prom
     const response = await apiClient.get('/expenses', {
       params: { category }
     });
-    return response.data.map(transformTransaction);
+    
+    // Handle paginated response (data property contains the actual transactions)
+    if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      return response.data.data.map(transformTransaction);
+    }
+    
+    // Handle direct array response (fallback for older API)
+    if (response.data && Array.isArray(response.data)) {
+      return response.data.map(transformTransaction);
+    }
+    
+    // If the response structure is unexpected, log and return empty array
+    console.error('Unexpected response structure from /expenses endpoint:', response.data);
+    return [];
   } catch (error) {
     console.error(`Error fetching transactions for category ${category}:`, error);
     throw error;
@@ -83,6 +142,19 @@ export const getTransactionsByCategory = async (category: ExpenseCategory): Prom
  */
 export const createTransaction = async (expense: Omit<Expense, 'id'>): Promise<Expense> => {
   try {
+    // Check if the account ID is a generated fallback ID (these won't work with the backend)
+    if (expense.accountId && expense.accountId.startsWith('gen_')) {
+      throw new Error('Cannot create transaction with a generated account ID. Please refresh accounts list or select a valid account.');
+    }
+    
+    // Log the transaction being sent
+    console.log('Creating transaction with data:', {
+      title: expense.title,
+      amount: expense.amount,
+      category: expense.category,
+      accountId: expense.accountId
+    });
+    
     // Transform to backend format
     const backendTransaction = {
       title: expense.title,
@@ -96,8 +168,23 @@ export const createTransaction = async (expense: Omit<Expense, 'id'>): Promise<E
     
     const response = await apiClient.post('/expenses', backendTransaction);
     return transformTransaction(response.data);
-  } catch (error) {
-    console.error('Error creating transaction:', error);
+  } catch (error: any) {
+    // Provide more detailed error information
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Error creating transaction - server response:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('Error creating transaction - no response received:', error.request);
+    } else {
+      // Something happened in setting up the request
+      console.error('Error creating transaction - request setup error:', error.message);
+    }
     throw error;
   }
 };
