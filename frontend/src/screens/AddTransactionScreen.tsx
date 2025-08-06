@@ -40,7 +40,7 @@ const AddTransactionScreen: React.FC = () => {
       setLoadingAccounts(true);
       console.log("Reloading accounts from server...");
       
-      const freshAccounts = await getAccounts();
+      const freshAccounts = await getAccounts(false);
       console.log(`Loaded ${freshAccounts.length} accounts from server`);
       
       if (freshAccounts.length === 0) {
@@ -155,7 +155,7 @@ const AddTransactionScreen: React.FC = () => {
     const fetchAccounts = async () => {
       try {
         setLoadingAccounts(true);
-        const fetchedAccounts = await getAccounts();
+        const fetchedAccounts = await getAccounts(false);
         
         console.log("FETCH - Got accounts:", fetchedAccounts.length);
         
@@ -380,7 +380,7 @@ const AddTransactionScreen: React.FC = () => {
             onPress: () => {
               // Reload accounts
               setLoadingAccounts(true);
-              getAccounts()
+              getAccounts(false)
                 .then(newAccounts => {
                   setAccounts(newAccounts);
                   if (newAccounts.length > 0) {

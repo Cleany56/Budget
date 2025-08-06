@@ -38,7 +38,9 @@ const StatSwitcher: React.FC<StatSwitcherProps> = ({ accounts, isLoading, error 
     const fetchMonthlySpending = async () => {
       try {
         setSpendingData(prev => ({ ...prev, isLoading: true, error: null }));
-        const data = await getMonthlySpending();
+        const data = await getMonthlySpending({
+          dateRange: 'thisMonth' // Default to current month
+        });
         console.log('Monthly spending data:', data);
         
         setSpendingData({

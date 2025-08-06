@@ -36,21 +36,47 @@ const TransactionsScreen: React.FC = () => {
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
   
-  // Load transactions and accounts from API
+  // Load transactions and accounts from API with filters
   useEffect(() => {
+    // Reset state when filters or search changes
+    if (search !== '' || activeFilters.type !== 'all' || 
+        activeFilters.categories.length > 0 || activeFilters.accounts.length > 0 || 
+        activeFilters.dateRange !== 'thisMonth') {
+      setAllTransactionsLoaded(false);
+    }
+    
     const loadData = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
+        // Create API query params based on current filters
+        const queryParams = {
+          search: search.trim(),
+          type: activeFilters.type,
+          dateRange: activeFilters.dateRange,
+          categories: activeFilters.categories,
+          accounts: activeFilters.accounts,
+          sortField: activeFilters.sortBy.field,
+          sortDirection: activeFilters.sortBy.direction,
+          // Always fetch more than we need for pagination
+          limit: INITIAL_PAGE_SIZE + ((page - 1) * PAGE_SIZE),
+          page: 1
+        };
+        
+        console.log(`Fetching transactions with limit: ${queryParams.limit}, page: ${page}`);
+        
         // Fetch transactions and accounts in parallel
+        // Explicitly set attemptFix to false to prevent infinite loops
         const [transactionsData, accountsData] = await Promise.all([
-          getTransactions(),
-          getAccounts()
+          getTransactions(queryParams),
+          page === 1 ? getAccounts(false) : Promise.resolve(accounts) // Only fetch accounts on first page
         ]);
         
         setTransactions(transactionsData);
-        setAccounts(accountsData);
+        if (page === 1) { // Only update accounts on first page load
+          setAccounts(accountsData);
+        }
       } catch (err) {
         console.error('Error loading transaction data:', err);
         setError('Failed to load transaction data. Please try again.');
@@ -60,76 +86,17 @@ const TransactionsScreen: React.FC = () => {
     };
     
     loadData();
-  }, []);
+  }, [search, activeFilters, page]);
   
-  // Apply filters to transactions
+  // Since we're now using server-side filtering, filteredTransactions is simply the transactions we got from the API
   const filteredTransactions = useMemo(() => {
     // If still loading or error, return empty array
-    if (isLoading || error || transactions.length === 0) {
+    if (isLoading || error) {
       return [];
     }
     
-    let result = [...transactions];
-    
-    // Filter by search term
-    if (search.trim()) {
-      const searchLower = search.toLowerCase().trim();
-      result = result.filter(tx => 
-        tx.title.toLowerCase().includes(searchLower) || 
-        (tx.notes && tx.notes.toLowerCase().includes(searchLower))
-      );
-    }
-    
-    // Filter by transaction type
-    if (activeFilters.type !== 'all') {
-      switch (activeFilters.type) {
-        case 'expense':
-          result = result.filter(tx => tx.amount < 0);
-          break;
-        case 'income':
-          result = result.filter(tx => tx.amount > 0);
-          break;
-        case 'transfer':
-          // For simplicity, assume transfers have "Transfer" in notes
-          result = result.filter(tx => 
-            tx.notes && tx.notes.toLowerCase().includes('transfer')
-          );
-          break;
-      }
-    }
-    
-    // Filter by categories
-    if (activeFilters.categories.length > 0) {
-      result = result.filter(tx => 
-        activeFilters.categories.includes(tx.category)
-      );
-    }
-    
-    // Filter by accounts
-    if (activeFilters.accounts.length > 0) {
-      result = result.filter(tx => 
-        tx.accountId && activeFilters.accounts.includes(tx.accountId)
-      );
-    }
-    
-    // Sort transactions
-    const { field, direction } = activeFilters.sortBy;
-    result.sort((a, b) => {
-      let comparison = 0;
-      
-      if (field === 'date') {
-        comparison = a.date.getTime() - b.date.getTime();
-      } else if (field === 'amount') {
-        comparison = a.amount - b.amount;
-      } else if (field === 'title') {
-        comparison = a.title.localeCompare(b.title);
-      }
-      
-      return direction === 'asc' ? comparison : -comparison;
-    });
-    
-    return result;
-  }, [transactions, search, activeFilters, isLoading, error]);
+    return transactions;
+  }, [transactions, isLoading, error]);
   
   // Get the number of active filters for the badge
   const activeFilterCount = useMemo(() => {
@@ -146,20 +113,36 @@ const TransactionsScreen: React.FC = () => {
     setPage(1);
   }, [search, activeFilters]);
   
-  // Calculate how many transactions to show:
-  // First page: INITIAL_PAGE_SIZE, subsequent pages: add PAGE_SIZE each time
-  const itemsToShow = INITIAL_PAGE_SIZE + (page - 1) * PAGE_SIZE;
+  // Keep track of whether we've loaded all transactions
+  const [allTransactionsLoaded, setAllTransactionsLoaded] = useState(false);
   
-  // Get the transactions to display based on filters and pagination
-  const pagedTransactions = filteredTransactions.slice(0, itemsToShow);
+  // Update allTransactionsLoaded flag when we get new transactions
+  useEffect(() => {
+    // If the length of fetched transactions is less than what we requested, we've loaded all transactions
+    const requestedCount = INITIAL_PAGE_SIZE + ((page - 1) * PAGE_SIZE);
+    if (transactions.length > 0 && transactions.length < requestedCount) {
+      setAllTransactionsLoaded(true);
+    }
+  }, [transactions, page]);
   
-  // Format transactions into sections for display - no need to limit further
-  const sections = getDisplayTransactionSections(pagedTransactions, accounts, pagedTransactions.length);
+  // Format transactions into sections for display
+  const sections = getDisplayTransactionSections(filteredTransactions, accounts, filteredTransactions.length);
+
+  // Ref to track if load more is in progress to prevent multiple calls
+  const isLoadingMoreRef = React.useRef(false);
 
   const handleLoadMore = () => {
-    // Only load more if we haven't displayed all filtered transactions yet
-    if (pagedTransactions.length < filteredTransactions.length) {
+    // Only load more if we haven't loaded all transactions yet, aren't currently loading,
+    // and another load more operation isn't already in progress
+    if (!allTransactionsLoaded && !isLoading && !isLoadingMoreRef.current) {
+      console.log(`Loading more transactions, page ${page + 1}`);
+      isLoadingMoreRef.current = true;
       setPage(page + 1);
+      
+      // Reset the flag after a short delay to allow the state update to complete
+      setTimeout(() => {
+        isLoadingMoreRef.current = false;
+      }, 500);
     }
   };
 
@@ -241,8 +224,20 @@ const TransactionsScreen: React.FC = () => {
             </View>
           );
         }}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
+        onEndReached={allTransactionsLoaded ? undefined : handleLoadMore}
+        onEndReachedThreshold={0.2}
+        ListFooterComponent={
+          isLoading && page > 1 ? (
+            <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={{ color: colors.text, marginTop: 8 }}>Loading more...</Text>
+            </View>
+          ) : allTransactionsLoaded && filteredTransactions.length > 0 ? (
+            <Text style={{ textAlign: 'center', padding: 20, color: colors.muted }}>
+              All transactions loaded
+            </Text>
+          ) : null
+        }
         ListEmptyComponent={<Text style={{ color: colors.muted, textAlign: 'center', marginTop: 32 }}>No transactions found.</Text>}
         style={{ marginTop: 8 }}
         stickySectionHeadersEnabled={false}

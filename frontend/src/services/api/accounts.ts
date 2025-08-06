@@ -111,7 +111,7 @@ export const fixAccountsWithMissingIds = async (): Promise<number> => {
  * Get all accounts for the current user
  * @param attemptFix If true, will automatically try to fix accounts if missing IDs are detected
  */
-export const getAccounts = async (attemptFix: boolean = true): Promise<AccountSummary[]> => {
+export const getAccounts = async (attemptFix: boolean = false): Promise<AccountSummary[]> => {
   try {
     // Make sure we use the same user ID consistently across the application
     const response = await apiClient.get('/accounts', {
@@ -121,27 +121,30 @@ export const getAccounts = async (attemptFix: boolean = true): Promise<AccountSu
     // Log for debugging
     console.log('Fetched accounts:', response.data);
     
-    // Always attempt to fix accounts before proceeding
+    // Only attempt to fix accounts if explicitly requested and accounts have issues
     if (attemptFix) {
-      console.log('Pre-emptively fixing accounts before checking...');
-      try {
-        const fixedCount = await fixAccountsWithMissingIds();
-        console.log(`Pre-emptive fix: ${fixedCount} accounts fixed`);
-        
-        if (fixedCount > 0) {
-          // Re-fetch accounts after fixing
-          console.log('Re-fetching accounts after fix...');
-          const newResponse = await apiClient.get('/accounts', {
-            params: { userId: 'user123' }
-          });
+      const accountsWithoutIds = response.data.filter((account: any) => !account._id && !account.id);
+      if (accountsWithoutIds.length > 0) {
+        console.log(`Found ${accountsWithoutIds.length} accounts without IDs, attempting fix...`);
+        try {
+          const fixedCount = await fixAccountsWithMissingIds();
+          console.log(`Fixed ${fixedCount} accounts`);
           
-          // Use the new response data
-          response.data = newResponse.data;
-          console.log('Re-fetched accounts:', response.data);
+          if (fixedCount > 0) {
+            // Re-fetch accounts after fixing
+            console.log('Re-fetching accounts after fix...');
+            const newResponse = await apiClient.get('/accounts', {
+              params: { userId: 'user123' }
+            });
+            
+            // Use the new response data
+            response.data = newResponse.data;
+            console.log('Re-fetched accounts:', response.data);
+          }
+        } catch (fixError) {
+          console.error('Fix attempt failed:', fixError);
+          // Continue with original accounts data
         }
-      } catch (fixError) {
-        console.error('Pre-emptive fix attempt failed:', fixError);
-        // Continue with original accounts data
       }
     }
     

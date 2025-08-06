@@ -36,11 +36,49 @@ const transformTransaction = (transaction: BackendTransaction): Expense => {
 };
 
 /**
- * Get all transactions/expenses for the current user
+ * Filter parameters for transaction queries
  */
-export const getTransactions = async (): Promise<Expense[]> => {
+export interface TransactionQueryParams {
+  search?: string;
+  type?: 'all' | 'expense' | 'income' | 'transfer';
+  dateRange?: string;
+  startDate?: Date;
+  endDate?: Date;
+  categories?: string[];
+  accounts?: string[];
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * Get all transactions/expenses for the current user with optional filters
+ */
+export const getTransactions = async (params: TransactionQueryParams = {}): Promise<Expense[]> => {
   try {
-    const response = await apiClient.get('/expenses');
+    // Build query parameters
+    const queryParams: Record<string, string> = {};
+    
+    if (params.search) queryParams.search = params.search;
+    if (params.type && params.type !== 'all') queryParams.type = params.type;
+    if (params.dateRange) queryParams.dateRange = params.dateRange;
+    if (params.startDate) queryParams.startDate = params.startDate.toISOString();
+    if (params.endDate) queryParams.endDate = params.endDate.toISOString();
+    if (params.categories && params.categories.length > 0) queryParams.categories = params.categories.join(',');
+    if (params.accounts && params.accounts.length > 0) queryParams.accounts = params.accounts.join(',');
+    
+    // Add sorting parameters
+    if (params.sortField) {
+      queryParams.sortField = params.sortField;
+      if (params.sortDirection) queryParams.sortDirection = params.sortDirection;
+    }
+    
+    // Add pagination parameters
+    if (params.page) queryParams.page = params.page.toString();
+    if (params.limit) queryParams.limit = params.limit.toString();
+    
+    const response = await apiClient.get('/expenses', { params: queryParams });
     
     // Log the response structure to debug
     console.log('Transactions response structure:', {
@@ -225,8 +263,7 @@ export const deleteTransaction = async (id: string): Promise<void> => {
  * Get total spending for the current month (or specified date range)
  */
 export const getMonthlySpending = async (
-  startDate?: Date, 
-  endDate?: Date
+  params: TransactionQueryParams = {}
 ): Promise<{ 
   totalSpending: number, 
   transactionCount: number, 
@@ -237,24 +274,19 @@ export const getMonthlySpending = async (
   } 
 }> => {
   try {
-    let url = '/expenses/monthly-spending';
-    const params = new URLSearchParams();
+    // Build query parameters
+    const queryParams: Record<string, string> = {};
     
-    if (startDate) {
-      params.append('startDate', startDate.toISOString());
-    }
+    if (params.startDate) queryParams.startDate = params.startDate.toISOString();
+    if (params.endDate) queryParams.endDate = params.endDate.toISOString();
+    if (params.search) queryParams.search = params.search;
+    if (params.type && params.type !== 'all') queryParams.type = params.type;
+    if (params.dateRange) queryParams.dateRange = params.dateRange;
+    if (params.categories && params.categories.length > 0) queryParams.categories = params.categories.join(',');
+    if (params.accounts && params.accounts.length > 0) queryParams.accounts = params.accounts.join(',');
     
-    if (endDate) {
-      params.append('endDate', endDate.toISOString());
-    }
-    
-    // Add parameters if any were specified
-    if (params.toString()) {
-      url += `?${params.toString()}`;
-    }
-    
-    console.log(`Fetching monthly spending with URL: ${url}`);
-    const response = await apiClient.get(url);
+    console.log('Fetching monthly spending with params:', queryParams);
+    const response = await apiClient.get('/expenses/monthly-spending', { params: queryParams });
     return response.data;
   } catch (error) {
     console.error('Error fetching monthly spending:', error);

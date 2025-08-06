@@ -134,8 +134,8 @@ export const useHomeData = () => {
         setLoading(prev => ({ ...prev, expenses: false }));
       });
       
-    // Fetch accounts
-    getAccounts()
+    // Fetch accounts (explicitly disable auto-fixing)
+    getAccounts(false)
       .then(accounts => {
         console.log('Accounts fetched successfully:', accounts);
         setData(prev => {

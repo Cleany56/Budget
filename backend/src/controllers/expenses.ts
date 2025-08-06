@@ -12,13 +12,76 @@ export const getExpenses = async (req: Request, res: Response): Promise<void> =>
     const userId = req.query.userId as string || 'user123';
     const accountId = req.query.accountId as string;
     const category = req.query.category as string;
-    const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
-    const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+    const searchTerm = req.query.search as string;
+    const type = req.query.type as string;
+    const accounts = req.query.accounts ? (req.query.accounts as string).split(',') : [];
+    const categories = req.query.categories ? (req.query.categories as string).split(',') : [];
+    const dateRange = req.query.dateRange as string;
+    
+    // Calculate date range based on the dateRange parameter
+    let startDate: Date | undefined = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+    let endDate: Date | undefined = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+    
+    // If dateRange is provided, override startDate and endDate
+    if (dateRange) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (dateRange) {
+        case 'today':
+          startDate = today;
+          endDate = new Date(today);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'yesterday':
+          startDate = new Date(today);
+          startDate.setDate(startDate.getDate() - 1);
+          endDate = new Date(startDate);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'thisWeek':
+          startDate = new Date(today);
+          startDate.setDate(startDate.getDate() - startDate.getDay()); // Start of week (Sunday)
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'thisMonth':
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'lastMonth':
+          startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'last3Months':
+          startDate = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'thisYear':
+          startDate = new Date(today.getFullYear(), 0, 1);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'lastYear':
+          startDate = new Date(today.getFullYear() - 1, 0, 1);
+          endDate = new Date(today.getFullYear() - 1, 11, 31);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        // Default to not setting dates if the dateRange is not recognized
+      }
+    }
     
     // Pagination parameters
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 50;
     const skip = (page - 1) * limit;
+    
+    // Sorting parameters
+    const sortField = req.query.sortField as string || 'date';
+    const sortDirection = req.query.sortDirection as string || 'desc';
     
     // Build filter criteria
     let filterString = 'userId == $0 && isDeleted == false';
@@ -31,9 +94,51 @@ export const getExpenses = async (req: Request, res: Response): Promise<void> =>
       paramIndex++;
     }
     
+    // Filter by multiple accounts if specified
+    if (accounts.length > 0) {
+      const accountConditions = accounts.map((_, i) => `accountId == $${paramIndex + i}`).join(' || ');
+      filterString += ` && (${accountConditions})`;
+      accounts.forEach(account => {
+        filterParams.push(account);
+      });
+      paramIndex += accounts.length;
+    }
+    
     if (category) {
       filterString += ` && category == $${paramIndex}`;
       filterParams.push(category);
+      paramIndex++;
+    }
+    
+    // Filter by multiple categories if specified
+    if (categories.length > 0) {
+      const categoryConditions = categories.map((_, i) => `category == $${paramIndex + i}`).join(' || ');
+      filterString += ` && (${categoryConditions})`;
+      categories.forEach(cat => {
+        filterParams.push(cat);
+      });
+      paramIndex += categories.length;
+    }
+    
+    // Filter by transaction type (expense, income, transfer)
+    if (type) {
+      if (type === 'expense') {
+        filterString += ' && amount < 0';
+      } else if (type === 'income') {
+        filterString += ' && amount > 0';
+      } else if (type === 'transfer') {
+        // For transfer type, look for "transfer" in the notes field
+        filterString += ` && notes CONTAINS[c] $${paramIndex}`;
+        filterParams.push('transfer');
+        paramIndex++;
+      }
+    }
+    
+    // Search by title or notes
+    if (searchTerm && searchTerm.trim()) {
+      const term = searchTerm.trim();
+      filterString += ` && (title CONTAINS[c] $${paramIndex} || notes CONTAINS[c] $${paramIndex})`;
+      filterParams.push(term);
       paramIndex++;
     }
     
@@ -51,9 +156,15 @@ export const getExpenses = async (req: Request, res: Response): Promise<void> =>
     }
     
     // Query the database with filters
-    const allExpenses = realm.objects('Transaction')
-      .filtered(filterString, ...filterParams)
-      .sorted('date', true);
+    let allExpenses = realm.objects('Transaction').filtered(filterString, ...filterParams);
+    
+    // Apply sorting based on query parameters
+    if (sortField) {
+      const isAscending = sortDirection === 'asc';
+      allExpenses = allExpenses.sorted(sortField, !isAscending); // Realm's second parameter is descending, so reverse the logic
+    } else {
+      allExpenses = allExpenses.sorted('date', true); // Default sorting
+    }
     
     // Get total count for pagination metadata
     const total = allExpenses.length;
@@ -492,21 +603,119 @@ export const getMonthlySpending = async (req: Request, res: Response): Promise<v
     const realm = await getRealm();
     const userId = req.query.userId as string || 'user123'; // Default for development
     
-    // Calculate start and end dates for the current month
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    // Get the same filter parameters as the main getExpenses endpoint
+    const searchTerm = req.query.search as string;
+    const type = req.query.type as string;
+    const accounts = req.query.accounts ? (req.query.accounts as string).split(',') : [];
+    const categories = req.query.categories ? (req.query.categories as string).split(',') : [];
+    const dateRange = req.query.dateRange as string;
     
-    // Override dates if provided in query params
-    const startDate = req.query.startDate ? new Date(req.query.startDate as string) : startOfMonth;
-    const endDate = req.query.endDate ? new Date(req.query.endDate as string) : endOfMonth;
+    // Calculate start and end dates based on dateRange or use provided dates
+    let startDate: Date;
+    let endDate: Date;
+    
+    if (dateRange) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (dateRange) {
+        case 'today':
+          startDate = today;
+          endDate = new Date(today);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'yesterday':
+          startDate = new Date(today);
+          startDate.setDate(startDate.getDate() - 1);
+          endDate = new Date(startDate);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'thisWeek':
+          startDate = new Date(today);
+          startDate.setDate(startDate.getDate() - startDate.getDay()); // Start of week (Sunday)
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'thisMonth':
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'lastMonth':
+          startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'last3Months':
+          startDate = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'thisYear':
+          startDate = new Date(today.getFullYear(), 0, 1);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'lastYear':
+          startDate = new Date(today.getFullYear() - 1, 0, 1);
+          endDate = new Date(today.getFullYear() - 1, 11, 31);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        default:
+          // Default to current month if dateRange not recognized
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+      }
+    } else {
+      // Use provided dates or default to current month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+      
+      startDate = req.query.startDate ? new Date(req.query.startDate as string) : startOfMonth;
+      endDate = req.query.endDate ? new Date(req.query.endDate as string) : endOfMonth;
+    }
     
     console.log(`Calculating spending from ${startDate.toISOString()} to ${endDate.toISOString()}`);
     
-    // Filter for negative transactions (spending) within the date range
+    // Build filter criteria
+    let filterString = 'userId == $0 && isDeleted == false && amount < 0 && date >= $1 && date <= $2';
+    let filterParams: any[] = [userId, startDate, endDate];
+    let paramIndex = 3;
+    
+    // Filter by multiple accounts if specified
+    if (accounts.length > 0) {
+      const accountConditions = accounts.map((_, i) => `accountId == $${paramIndex + i}`).join(' || ');
+      filterString += ` && (${accountConditions})`;
+      accounts.forEach(account => {
+        filterParams.push(account);
+      });
+      paramIndex += accounts.length;
+    }
+    
+    // Filter by multiple categories if specified
+    if (categories.length > 0) {
+      const categoryConditions = categories.map((_, i) => `category == $${paramIndex + i}`).join(' || ');
+      filterString += ` && (${categoryConditions})`;
+      categories.forEach(cat => {
+        filterParams.push(cat);
+      });
+      paramIndex += categories.length;
+    }
+    
+    // Search by title or notes
+    if (searchTerm && searchTerm.trim()) {
+      const term = searchTerm.trim();
+      filterString += ` && (title CONTAINS[c] $${paramIndex} || notes CONTAINS[c] $${paramIndex})`;
+      filterParams.push(term);
+      paramIndex++;
+    }
+    
+    // Filter for transactions with the built criteria
     const transactions = realm.objects('Transaction')
-      .filtered('userId == $0 && isDeleted == false && amount < 0 && date >= $1 && date <= $2', 
-        userId, startDate, endDate);
+      .filtered(filterString, ...filterParams);
     
     // Calculate total spending (negate the sum to get a positive value)
     let totalSpending = 0;
@@ -521,16 +730,20 @@ export const getMonthlySpending = async (req: Request, res: Response): Promise<v
     const formattedStartDate = startDate.toISOString().split('T')[0];
     const formattedEndDate = endDate.toISOString().split('T')[0];
     
+    // Check if this is the current month
+    const currentDate = new Date();
+    const isCurrentMonth = (
+      startDate.getMonth() === currentDate.getMonth() && 
+      startDate.getFullYear() === currentDate.getFullYear()
+    );
+    
     res.status(200).json({
       totalSpending,
       transactionCount,
       period: {
         startDate: formattedStartDate,
         endDate: formattedEndDate,
-        isCurrentMonth: (
-          startDate.getMonth() === now.getMonth() && 
-          startDate.getFullYear() === now.getFullYear()
-        )
+        isCurrentMonth
       }
     });
   } catch (error) {
