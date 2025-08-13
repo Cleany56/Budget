@@ -42,10 +42,19 @@ export const calculateDebtRepayment = (
   // Run simulation with the payment
   let activeDebts = workingDebts.filter(debt => debt.balance > 0);
   
+  // Calculate total minimum payment
+  const minimumPaymentSum = activeDebts.reduce((sum, debt) => sum + debt.minPayment, 0);
+  
+  // Ensure payment is at least the sum of all minimum payments
+  payment = Math.max(payment, minimumPaymentSum);
+  
   while (activeDebts.length > 0 && months < 600) {
     months++;
     let monthRecord: MonthRecord = { month: months, debts: [] };
-    let remainingPayment = payment;
+    
+    // This is the additional payment beyond minimum payments
+    // User enters this as their "monthly payment"
+    let additionalPayment = payment - minimumPaymentSum;
     
     // Pay minimum on all debts and calculate interest
     activeDebts.forEach(debt => {
@@ -55,7 +64,6 @@ export const calculateDebtRepayment = (
       
       const minPayment = Math.min(debt.minPayment, debt.balance);
       debt.balance -= minPayment;
-      remainingPayment -= minPayment;
       
       monthRecord.debts.push({
         name: debt.name,
@@ -66,12 +74,12 @@ export const calculateDebtRepayment = (
       });
     });
     
-    // Apply remaining payment to highest priority debt (first in the sorted list)
-    for (let i = 0; i < activeDebts.length && remainingPayment > 0; i++) {
+    // Apply additional payment to highest priority debt (first in the sorted list)
+    for (let i = 0; i < activeDebts.length && additionalPayment > 0; i++) {
       if (activeDebts[i].balance > 0) {
-        const extraPayment = Math.min(remainingPayment, activeDebts[i].balance);
+        const extraPayment = Math.min(additionalPayment, activeDebts[i].balance);
         activeDebts[i].balance -= extraPayment;
-        remainingPayment -= extraPayment;
+        additionalPayment -= extraPayment;
         
         // Update the payment in the month record
         monthRecord.debts[i].payment += extraPayment;
@@ -112,32 +120,42 @@ const estimateRequiredPayment = (
     let testMonths = 0;
     let stillPaying = true;
     
+    // Calculate current minimum payments (might change as balances get paid off)
+    let activeTestDebts = testDebts.filter(debt => debt.balance > 0);
+    let currentMinPaymentSum = activeTestDebts.reduce((sum, debt) => sum + debt.minPayment, 0);
+    
     while (stillPaying && testMonths < 600) {
       testMonths++;
       stillPaying = false;
       
-      let remainingPayment = estimatedPayment;
+      // Ensure payment is at least the sum of all minimum payments
+      let totalPayment = Math.max(estimatedPayment, currentMinPaymentSum);
+      // This is the additional payment beyond minimum payments
+      let additionalPayment = totalPayment - currentMinPaymentSum;
       
       // Pay minimum on all debts
-      testDebts.forEach(debt => {
+      activeTestDebts.forEach(debt => {
         if (debt.balance > 0) {
           const interest = (debt.interestRate / 100 / 12) * debt.balance;
           const minPayment = Math.min(debt.minPayment, debt.balance + interest);
           
           debt.balance += interest - minPayment;
-          remainingPayment -= minPayment;
           stillPaying = stillPaying || debt.balance > 0;
         }
       });
       
-      // Apply remaining payment to prioritized debt
-      for (let i = 0; i < testDebts.length && remainingPayment > 0; i++) {
-        if (testDebts[i].balance > 0) {
-          const extraPayment = Math.min(remainingPayment, testDebts[i].balance);
-          testDebts[i].balance -= extraPayment;
-          remainingPayment -= extraPayment;
+      // Apply additional payment to prioritized debt
+      for (let i = 0; i < activeTestDebts.length && additionalPayment > 0; i++) {
+        if (activeTestDebts[i].balance > 0) {
+          const extraPayment = Math.min(additionalPayment, activeTestDebts[i].balance);
+          activeTestDebts[i].balance -= extraPayment;
+          additionalPayment -= extraPayment;
         }
       }
+      
+      // Update active debts and minimum payment sum for next iteration
+      activeTestDebts = activeTestDebts.filter(debt => debt.balance > 0);
+      currentMinPaymentSum = activeTestDebts.reduce((sum, debt) => sum + debt.minPayment, 0);
     }
     
     if (Math.abs(testMonths - targetMonths) < 1 || upperBound - lowerBound < 1) {

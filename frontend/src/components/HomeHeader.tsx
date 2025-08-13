@@ -25,13 +25,13 @@ interface HomeHeaderProps {
     expenses: string | null;
   };
   colors: any;
-  onDataRefresh: () => void;
+  onDataRefresh: (forceReload?: boolean) => void;
 }
 
 /**
  * Header component for the home screen
  */
-export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(({
+export const HomeHeader: React.FC<HomeHeaderProps> = ({
   accounts,
   budgets,
   goals,
@@ -40,10 +40,14 @@ export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(({
   colors,
   onDataRefresh
 }) => {
+  // Handle refresh with force reload
+  const handleForceRefresh = () => {
+    onDataRefresh(true);
+  };
   return (
     <View style={styles.container}>
       {/* Developer Tools - Remove this in production */}
-      <DevToolbar onDataChanged={onDataRefresh} />
+      <DevToolbar onDataChanged={handleForceRefresh} />
       
       {/* Status indicators at the top */}
       {Object.values(loading).every(val => val) && (
@@ -71,7 +75,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(({
       {loading.accounts ? (
         <LoadingIndicator type="account" />
       ) : error.accounts ? (
-        <ErrorMessage message={error.accounts} onRetry={onDataRefresh} />
+        <ErrorMessage message={error.accounts} onRetry={handleForceRefresh} />
       ) : (
         <AccountSummaryPanel accounts={accounts} />
       )}
@@ -85,7 +89,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(({
         colors={colors}
         data={budgets.slice(0, 3)}
         dataType="budgets"
-        onRetry={onDataRefresh}
+        onRetry={handleForceRefresh}
       />
       
       {/* Goals Section */}
@@ -97,7 +101,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(({
         colors={colors}
         data={goals.slice(0, 2)}
         dataType="goals"
-        onRetry={onDataRefresh}
+        onRetry={handleForceRefresh}
       />
       
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -105,10 +109,10 @@ export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(({
       </Text>
       
       {loading.expenses && <LoadingIndicator type="transaction" />}
-      {error.expenses && <ErrorMessage message={error.expenses} onRetry={onDataRefresh} />}
+      {error.expenses && <ErrorMessage message={error.expenses} onRetry={handleForceRefresh} />}
     </View>
   );
-});
+};
 
 const styles = StyleSheet.create({
   container: {

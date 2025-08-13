@@ -14,15 +14,26 @@ const RepaymentStrategyPicker: React.FC<RepaymentStrategyPickerProps> = ({
   setRepaymentMethod,
   colors
 }) => {
+  // Handle repayment method change
+  const handleRepaymentMethodChange = (value: RepaymentMethod) => {
+    // Update the repayment method
+    setRepaymentMethod(value);
+    // Results will auto-update via useEffect in the hook
+  };
+
   return (
     <View style={styles.inputGroup}>
       <Text style={[styles.label, { color: colors.text }]}>Repayment Strategy</Text>
+      <Text style={[styles.description, { color: colors.muted }]}>
+        Choose which debts to prioritize - results update automatically
+      </Text>
       <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
         <Picker
           selectedValue={repaymentMethod}
-          onValueChange={(value) => setRepaymentMethod(value as RepaymentMethod)}
+          onValueChange={handleRepaymentMethodChange}
           style={{ color: colors.text }}
           dropdownIconColor={colors.text}
+          accessibilityLabel="Select repayment strategy"
         >
           <Picker.Item key="avalanche" label="Debt Avalanche (Highest Interest First)" value="avalanche" />
           <Picker.Item key="snowball" label="Debt Snowball (Smallest Balance First)" value="snowball" />
@@ -39,7 +50,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 4,
+  },
+  description: {
+    fontSize: 14,
     marginBottom: 8,
+    lineHeight: 18,
   },
   pickerContainer: {
     borderWidth: 1,

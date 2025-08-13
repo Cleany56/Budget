@@ -91,6 +91,7 @@ The current implementation has several security vulnerabilities that should be a
    - Remove or secure development routes in production
    - Implement rate limiting on API endpoints
    - Use Helmet.js for secure HTTP headers
+   - Implement debouncing for text search inputs to prevent excessive API calls
 
 ## React Key Warnings
 

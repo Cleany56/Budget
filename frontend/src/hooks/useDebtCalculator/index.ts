@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   DebtItem, 
   RepaymentMethod, 
@@ -80,6 +80,85 @@ export const useDebtCalculator = (): UseDebtCalculatorResult => {
   const [totalInterest, setTotalInterest] = useState<string | null>(null);
   const [paymentSchedule, setPaymentSchedule] = useState<MonthRecord[]>([]);
   
+  // Flag to track if a calculation has been performed
+  const [calculationPerformed, setCalculationPerformed] = useState<boolean>(false);
+  
+  // Internal calculation function to avoid dependency cycle
+  const performCalculation = () => {
+    if (debts.length === 0) {
+      return;
+    }
+    
+    // Reset results to show calculation is happening
+    setTimeToPayoff(null);
+    setTotalInterest(null);
+    setRequiredPayment(null);
+    
+    if (calculationMode === 'timeframe') {
+      const targetMonths = (parseInt(repaymentYears) || 0) * 12 + (parseInt(repaymentMonths) || 0);
+      
+      if (targetMonths <= 0) {
+        return;
+      }
+      
+      // Get current values from state to ensure we're using latest values
+      const results = calculateDebtRepayment(
+        debts,
+        repaymentMethod,
+        0, // Monthly payment will be calculated based on timeframe
+        targetMonths
+      );
+      
+      setRequiredPayment(`$${results.payment.toLocaleString('en-US', { maximumFractionDigits: 2 })}`);
+      
+      const years = Math.floor(results.months / 12);
+      const remainingMonths = results.months % 12;
+      
+      const yearsDisplay = years === 1 ? '1 year' : `${years} years`;
+      const monthsDisplay = remainingMonths === 1 ? '1 month' : `${remainingMonths} months`;
+      setTimeToPayoff(`${yearsDisplay}, ${monthsDisplay}`);
+      setTotalInterest(`$${results.totalInterestPaid.toLocaleString('en-US', { maximumFractionDigits: 2 })}`);
+      setPaymentSchedule(results.paymentSchedule);
+      
+    } else {
+      // Payment-based calculation
+      const payment = parseFloat(monthlyPayment);
+      
+      if (!payment || payment <= 0) {
+        return;
+      }
+      
+      // Get current values from state to ensure we're using latest values
+      const results = calculateDebtRepayment(
+        debts,
+        repaymentMethod,
+        payment
+      );
+      
+      const years = Math.floor(results.months / 12);
+      const remainingMonths = results.months % 12;
+      
+      const yearsDisplay = years === 1 ? '1 year' : `${years} years`;
+      const monthsDisplay = remainingMonths === 1 ? '1 month' : `${remainingMonths} months`;
+      setTimeToPayoff(`${yearsDisplay}, ${monthsDisplay}`);
+      setTotalInterest(`$${results.totalInterestPaid.toLocaleString('en-US', { maximumFractionDigits: 2 })}`);
+      setPaymentSchedule(results.paymentSchedule);
+    }
+  };
+  
+  // Automatically recalculate when relevant parameters change if a calculation has already been performed
+  useEffect(() => {
+    if (calculationPerformed) {
+      // Force recalculation when repayment method changes
+      performCalculation();
+    }
+  }, [
+    repaymentMethod, // Recalculate when strategy changes
+    calculationPerformed,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Disable the exhaustive deps warning as we want to control exactly when recalculations happen
+  ]); // Re-run when these dependencies change
+  
   // Actions
   const addDebt = (newDebtData: Omit<DebtItem, 'id'>) => {
     const newDebt: DebtItem = {
@@ -124,23 +203,6 @@ export const useDebtCalculator = (): UseDebtCalculatorResult => {
         alert('Please enter a valid timeframe');
         return;
       }
-      
-      const results = calculateDebtRepayment(
-        debts,
-        repaymentMethod,
-        0, // Monthly payment will be calculated based on timeframe
-        targetMonths
-      );
-      
-      setRequiredPayment(`$${results.payment.toLocaleString('en-US', { maximumFractionDigits: 2 })}`);
-      
-      const years = Math.floor(results.months / 12);
-      const remainingMonths = results.months % 12;
-      
-      setTimeToPayoff(`${years} years, ${remainingMonths} months`);
-      setTotalInterest(`$${results.totalInterestPaid.toLocaleString('en-US', { maximumFractionDigits: 2 })}`);
-      setPaymentSchedule(results.paymentSchedule);
-      
     } else {
       // Payment-based calculation
       const payment = parseFloat(monthlyPayment);
@@ -149,20 +211,13 @@ export const useDebtCalculator = (): UseDebtCalculatorResult => {
         alert('Please enter a valid monthly payment');
         return;
       }
-      
-      const results = calculateDebtRepayment(
-        debts,
-        repaymentMethod,
-        payment
-      );
-      
-      const years = Math.floor(results.months / 12);
-      const remainingMonths = results.months % 12;
-      
-      setTimeToPayoff(`${years} years, ${remainingMonths} months`);
-      setTotalInterest(`$${results.totalInterestPaid.toLocaleString('en-US', { maximumFractionDigits: 2 })}`);
-      setPaymentSchedule(results.paymentSchedule);
     }
+    
+    // Mark that a calculation has been performed
+    setCalculationPerformed(true);
+    
+    // Perform the calculation - force immediate recalculation
+    performCalculation();
   };
   
   return {

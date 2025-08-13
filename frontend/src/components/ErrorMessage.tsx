@@ -10,7 +10,7 @@ interface ErrorMessageProps {
 /**
  * Reusable error message component with retry option
  */
-export const ErrorMessage: React.FC<ErrorMessageProps> = React.memo(({ 
+export const ErrorMessage: React.FC<ErrorMessageProps> = ({ 
   message,
   onRetry
 }) => {
@@ -29,7 +29,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = React.memo(({
       )}
     </View>
   );
-});
+};
 
 const styles = StyleSheet.create({
   errorContainer: {

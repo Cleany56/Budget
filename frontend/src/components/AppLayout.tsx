@@ -21,9 +21,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
   const { colors } = useTheme();
   
+  // Simple function to handle dark mode toggle
+  const handleToggleDarkMode = () => {
+    toggleDarkMode();
+  };
+  
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <NavBar date={date} toggleDarkMode={toggleDarkMode} showBack={showBack} onBackPress={onBackPress} />
+      <NavBar date={date} toggleDarkMode={handleToggleDarkMode} showBack={showBack} onBackPress={onBackPress} />
       <View style={styles.content}>
         {children}
       </View>

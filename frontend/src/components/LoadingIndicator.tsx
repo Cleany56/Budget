@@ -11,7 +11,7 @@ interface LoadingIndicatorProps {
 /**
  * Reusable loading indicator with skeleton UI options
  */
-export const LoadingIndicator: React.FC<LoadingIndicatorProps> = React.memo(({ 
+export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ 
   type = "default",
   size 
 }) => {
@@ -42,7 +42,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = React.memo(({
       <Text style={[styles.loadingText, { color: colors.text }]}>Loading data...</Text>
     </View>
   );
-});
+};
 
 const styles = StyleSheet.create({
   loadingContainer: {

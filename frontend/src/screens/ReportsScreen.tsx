@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,7 +8,8 @@ import AppLayout from '../components/AppLayout';
 import HorizontalBarChart from '../components/HorizontalBarChart';
 import PieChart from '../components/PieChart';
 import { useTheme } from '../theme/ThemeContext';
-import { DUMMY_EXPENSES } from '../utils/dummyData';
+import { getTransactions } from '../services/api/transactions';
+import { Expense } from '../types';
 import { ExpenseCategory } from '../types';
 
 // Pie chart colors for each category (same as in MonthDetailScreen)
@@ -27,10 +28,31 @@ const ReportsScreen: React.FC = () => {
   const { colors, toggleDarkMode } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
+  // State for transactions
+  const [transactions, setTransactions] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const txs = await getTransactions();
+        setTransactions(txs);
+      } catch (err) {
+        setError('Failed to load transactions');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   // Aggregate expenses by month (YYYY-MM)
   const monthlySummary = useMemo(() => {
     const summaryMap: Record<string, { label: string; year: number; month: number; income: number; spend: number }> = {};
-    DUMMY_EXPENSES.forEach(exp => {
+    transactions.forEach(exp => {
       const year = exp.date.getFullYear();
       const month = exp.date.getMonth();
       const key = `${year}-${month}`;
@@ -47,7 +69,7 @@ const ReportsScreen: React.FC = () => {
     });
     // Sort descending by year, month
     return Object.values(summaryMap).sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month);
-  }, []);
+  }, [transactions]);
 
   // Get current year
   const currentYear = new Date().getFullYear();
@@ -58,7 +80,7 @@ const ReportsScreen: React.FC = () => {
     let spending = 0;
     
     // Calculate total income and spending for the current year
-    DUMMY_EXPENSES
+    transactions
       .filter(exp => exp.date.getFullYear() === currentYear)
       .forEach(exp => {
         if (exp.amount >= 0) {
@@ -77,7 +99,7 @@ const ReportsScreen: React.FC = () => {
       netIncome,
       savingsRate
     };
-  }, []);
+  }, [transactions, currentYear]);
   
   // Calculate yearly expense summary by category
   const yearlyExpensesByCategory = useMemo(() => {
@@ -93,10 +115,12 @@ const ReportsScreen: React.FC = () => {
     };
     
     // Only consider expenses (negative amounts) from current year
-    DUMMY_EXPENSES
+    transactions
       .filter(exp => exp.amount < 0 && exp.date.getFullYear() === currentYear)
       .forEach(exp => {
-        categorySummary[exp.category] += Math.abs(exp.amount);
+        if (categorySummary[exp.category as ExpenseCategory] !== undefined) {
+          categorySummary[exp.category as ExpenseCategory] += Math.abs(exp.amount);
+        }
       });
     
     // Convert to pie chart data format
@@ -107,7 +131,37 @@ const ReportsScreen: React.FC = () => {
         amount: value,
         color: CATEGORY_COLORS[category as ExpenseCategory],
       }));
-  }, []);
+  }, [transactions, currentYear]);
+  
+  if (loading) {
+    return (
+      <AppLayout toggleDarkMode={toggleDarkMode}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: colors.text }}>Loading reports...</Text>
+        </View>
+      </AppLayout>
+    );
+  }
+  
+  if (error) {
+    return (
+      <AppLayout toggleDarkMode={toggleDarkMode}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: colors.error }}>{error}</Text>
+        </View>
+      </AppLayout>
+    );
+  }
+  
+  if (!transactions || transactions.length === 0) {
+    return (
+      <AppLayout toggleDarkMode={toggleDarkMode}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: colors.text }}>No transactions found for this year.</Text>
+        </View>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout toggleDarkMode={toggleDarkMode}>
@@ -119,21 +173,21 @@ const ReportsScreen: React.FC = () => {
           <Text style={[styles.subTitle, { color: colors.text }]}>{currentYear} Financial Summary</Text>
           <View style={styles.financialSummary}>
             <View style={styles.financialItem}>
-              <Text style={styles.financialLabel}>Income</Text>
+              <Text style={[styles.financialLabel, { color: colors.muted }]}>Income</Text>
               <Text style={[styles.financialAmount, { color: colors.text }]}>
                 ${yearlyFinancialSummary.income.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Text>
             </View>
             
             <View style={styles.financialItem}>
-              <Text style={styles.financialLabel}>Spending</Text>
+              <Text style={[styles.financialLabel, { color: colors.muted }]}>Spending</Text>
               <Text style={[styles.financialAmount, { color: colors.text }]}>
                 ${yearlyFinancialSummary.spending.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Text>
             </View>
             
             <View style={styles.financialItem}>
-              <Text style={styles.financialLabel}>Net Income</Text>
+              <Text style={[styles.financialLabel, { color: colors.muted }]}>Net Income</Text>
               <Text style={[
                 styles.financialAmount, 
                 { color: yearlyFinancialSummary.netIncome >= 0 ? '#2ecc71' : '#e74c3c' }
@@ -144,7 +198,7 @@ const ReportsScreen: React.FC = () => {
             </View>
             
             <View style={styles.financialItem}>
-              <Text style={styles.financialLabel}>Savings Rate</Text>
+              <Text style={[styles.financialLabel, { color: colors.muted }]}>Savings Rate</Text>
               <Text style={[
                 styles.financialAmount, 
                 { color: yearlyFinancialSummary.savingsRate >= 0 ? '#2ecc71' : '#e74c3c' }
@@ -168,20 +222,23 @@ const ReportsScreen: React.FC = () => {
               />
             </View>
           ) : (
-            <Text style={[styles.emptyText, { color: colors.secondary }]}>No expenses for {currentYear}</Text>
+            <Text style={[styles.emptyText, { color: colors.muted }]}>No expenses for {currentYear}</Text>
           )}
         </View>
         
         {/* Monthly horizontal bar charts */}
         <Text style={[styles.subTitle, { color: colors.text, marginTop: 16 }]}>Monthly Overview</Text>
         <View style={{ width: '100%' }}>
-          {/* Find the largest value (income or spend) for scaling */}
           {(() => {
+            // Find the largest value (income or spend) for scaling
             const maxBar = Math.max(
-              ...monthlySummary.map(m => Math.max(m.income, Math.abs(m.spend)))
+              ...monthlySummary.map(m => Math.max(m.income, Math.abs(m.spend))),
+              0.01 // Prevent division by zero if there are no transactions
             );
             return monthlySummary.map((month) => (
-              <View key={month.label} style={[styles.monthBox, styles.smallerMonthBox, { borderColor: colors.border, backgroundColor: colors.card }]}> 
+              <View 
+                key={`${month.year}-${month.month}`} 
+                style={[styles.monthBox, styles.smallerMonthBox, { borderColor: colors.border, backgroundColor: colors.card }]}> 
                 <View style={styles.monthHeaderRow}>
                   <Text style={[styles.monthLabel, { color: colors.text }]}>{month.label}</Text>
                   <TouchableOpacity
@@ -246,7 +303,6 @@ const styles = StyleSheet.create({
   },
   financialLabel: {
     fontSize: 14,
-    color: '#888',
     marginBottom: 2,
   },
   financialAmount: {

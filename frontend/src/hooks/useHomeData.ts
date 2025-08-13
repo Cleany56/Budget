@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Expense, AccountSummary, Budget, Goal } from '../types';
 import { 
   getTransactions, 
@@ -59,9 +59,22 @@ export const useHomeData = () => {
     budgets: null,
     goals: null
   });
+
+  // Ref to track if data was already loaded
+  const dataLoadedRef = useRef<boolean>(false);
+  // Ref to track if we're currently loading data
+  const loadingInProgressRef = useRef<boolean>(false);
   
   // Load data from API - memoized with useCallback to prevent unnecessary re-renders
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (forceReload: boolean = false) => {
+    // If we're already loading data or data was already loaded and we're not forcing a reload, skip
+    if (loadingInProgressRef.current || (dataLoadedRef.current && !forceReload)) {
+      return;
+    }
+    
+    // Mark that loading is in progress
+    loadingInProgressRef.current = true;
+    
     // Reset loading states
     setLoading({
       expenses: true,
@@ -120,69 +133,81 @@ export const useHomeData = () => {
     }
     
     // API is online, fetch expenses
-    getTransactions()
-      .then(expenses => {
-        setData(prev => ({ ...prev, expenses }));
-        setLoading(prev => ({ ...prev, expenses: false }));
-      })
-      .catch(err => {
-        console.error('Failed to load transactions:', err);
-        setError(prev => ({ 
-          ...prev, 
-          expenses: "Could not load transactions. Please try again." 
-        }));
-        setLoading(prev => ({ ...prev, expenses: false }));
-      });
-      
-    // Fetch accounts (explicitly disable auto-fixing)
-    getAccounts(false)
-      .then(accounts => {
-        console.log('Accounts fetched successfully:', accounts);
-        setData(prev => {
-          console.log('Previous accounts state:', prev.accounts);
-          console.log('New accounts state:', accounts);
-          return { ...prev, accounts };
-        });
-        setLoading(prev => ({ ...prev, accounts: false }));
-      })
-      .catch(err => {
-        console.error('Failed to load accounts:', err);
-        setError(prev => ({ 
-          ...prev, 
-          accounts: "Could not load accounts. Please try again." 
-        }));
-        setLoading(prev => ({ ...prev, accounts: false }));
-      });
-      
-    // Fetch budgets
-    apiGetLatestBudgets(3)
-      .then(budgets => {
-        setData(prev => ({ ...prev, budgets }));
-        setLoading(prev => ({ ...prev, budgets: false }));
-      })
-      .catch(err => {
-        console.error('Failed to load budgets:', err);
-        setError(prev => ({ 
-          ...prev, 
-          budgets: "Could not load budgets. Please try again." 
-        }));
-        setLoading(prev => ({ ...prev, budgets: false }));
-      });
-      
-    // Fetch goals
-    apiGetLatestGoals(2)
-      .then(goals => {
-        setData(prev => ({ ...prev, goals }));
-        setLoading(prev => ({ ...prev, goals: false }));
-      })
-      .catch(err => {
-        console.error('Failed to load goals:', err);
-        setError(prev => ({ 
-          ...prev, 
-          goals: "Could not load goals. Please try again." 
-        }));
-        setLoading(prev => ({ ...prev, goals: false }));
-      });
+    Promise.all([
+      // Fetch transactions
+      getTransactions()
+        .then(expenses => {
+          setData(prev => ({ ...prev, expenses }));
+          setLoading(prev => ({ ...prev, expenses: false }));
+          return true;
+        })
+        .catch(err => {
+          console.error('Failed to load transactions:', err);
+          setError(prev => ({ 
+            ...prev, 
+            expenses: "Could not load transactions. Please try again." 
+          }));
+          setLoading(prev => ({ ...prev, expenses: false }));
+          return false;
+        }),
+        
+      // Fetch accounts (explicitly disable auto-fixing)
+      getAccounts(false)
+        .then(accounts => {
+          // Remove excessive logging that's causing console spam
+          setData(prev => ({ ...prev, accounts }));
+          setLoading(prev => ({ ...prev, accounts: false }));
+          return true;
+        })
+        .catch(err => {
+          console.error('Failed to load accounts:', err);
+          setError(prev => ({ 
+            ...prev, 
+            accounts: "Could not load accounts. Please try again." 
+          }));
+          setLoading(prev => ({ ...prev, accounts: false }));
+          return false;
+        }),
+        
+      // Fetch budgets
+      apiGetLatestBudgets(3)
+        .then(budgets => {
+          setData(prev => ({ ...prev, budgets }));
+          setLoading(prev => ({ ...prev, budgets: false }));
+          return true;
+        })
+        .catch(err => {
+          console.error('Failed to load budgets:', err);
+          setError(prev => ({ 
+            ...prev, 
+            budgets: "Could not load budgets. Please try again." 
+          }));
+          setLoading(prev => ({ ...prev, budgets: false }));
+          return false;
+        }),
+        
+      // Fetch goals
+      apiGetLatestGoals(2)
+        .then(goals => {
+          setData(prev => ({ ...prev, goals }));
+          setLoading(prev => ({ ...prev, goals: false }));
+          return true;
+        })
+        .catch(err => {
+          console.error('Failed to load goals:', err);
+          setError(prev => ({ 
+            ...prev, 
+            goals: "Could not load goals. Please try again." 
+          }));
+          setLoading(prev => ({ ...prev, goals: false }));
+          return false;
+        })
+    ]).finally(() => {
+      // Mark that data has been loaded
+      dataLoadedRef.current = true;
+      // Mark that loading is no longer in progress
+      loadingInProgressRef.current = false;
+    });
   }, []);
 
   // Helper to check if any data is still loading

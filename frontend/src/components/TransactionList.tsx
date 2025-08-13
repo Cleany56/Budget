@@ -21,7 +21,7 @@ interface TransactionListProps {
 /**
  * Reusable transaction list component with performance optimizations
  */
-export const TransactionList: React.FC<TransactionListProps> = React.memo(({
+export const TransactionList: React.FC<TransactionListProps> = ({
   expenses,
   accounts,
   loading,
@@ -131,7 +131,7 @@ export const TransactionList: React.FC<TransactionListProps> = React.memo(({
       scrollEnabled={false} // Disable scrolling since parent ScrollView handles it
     />
   );
-});
+};
 
 const styles = StyleSheet.create({
   list: {

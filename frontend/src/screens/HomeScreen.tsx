@@ -17,6 +17,8 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode: toggleDarkModeProp }) => {
   const { colors, toggleDarkMode: themeToggleDarkMode } = useTheme();
   const navigation = useNavigation();
+  
+  // Simply use the provided toggle function or fall back to the theme context's function
   const toggleDarkModeFn = toggleDarkModeProp || themeToggleDarkMode;
   
   // Use custom hook for data fetching and state management
@@ -28,12 +30,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ toggleDarkMode: toggleDarkModeP
   } = useHomeData();
   
   useEffect(() => {
-    // Initial data load
-    loadData();
+    // Initial data load - only force reload when focus changes, not on every render
+    loadData(false);
     
     // Set up focus listener to reload data when navigating back to this screen
     const unsubscribe = navigation.addListener('focus', () => {
-      loadData();
+      // Force reload when screen comes into focus
+      loadData(true);
     });
     
     // Clean up listener on unmount

@@ -4,7 +4,8 @@ import AppLayout from '../components/AppLayout';
 import { useTheme } from '../theme/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import PieChart from '../components/PieChart';
-import { DUMMY_EXPENSES } from '../utils/dummyData';
+import { getTransactions } from '../services/api/transactions';
+import { Expense } from '../types';
 import { ExpenseCategory } from '../types';
 import { getTransactionIconComponent } from '../utils/transactionIcons';
 import { MaterialCommunityIcons, MaterialIcons, FontAwesome5, Ionicons, Entypo } from '@expo/vector-icons';
@@ -25,7 +26,30 @@ const MonthDetailScreen: React.FC<any> = ({ route }) => {
   const { colors, toggleDarkMode } = useTheme();
   const navigation = useNavigation();
   const { year, month, label } = route.params;
-  
+
+  const [transactions, setTransactions] = React.useState<Expense[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Get all transactions for this month
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+        const txs = await getTransactions({ startDate, endDate });
+        setTransactions(txs);
+      } catch (err) {
+        setError('Failed to load transactions');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [year, month]);
+
   // Filter expenses for this month and only spending (amount < 0)
   const spendingByCategory = useMemo(() => {
     const map: Record<ExpenseCategory, number> = {
@@ -38,19 +62,15 @@ const MonthDetailScreen: React.FC<any> = ({ route }) => {
       [ExpenseCategory.HOUSING]: 0,
       [ExpenseCategory.OTHER]: 0,
     };
-    
-    DUMMY_EXPENSES.forEach(exp => {
-      if (
-        exp.amount < 0 &&
-        exp.date.getFullYear() === year &&
-        exp.date.getMonth() === month
-      ) {
-        map[exp.category] += Math.abs(exp.amount);
+    transactions.forEach((exp: Expense) => {
+      if (exp.amount < 0) {
+        if (map[exp.category as ExpenseCategory] !== undefined) {
+          map[exp.category as ExpenseCategory] += Math.abs(exp.amount);
+        }
       }
     });
-    
     return map;
-  }, [year, month]);
+  }, [transactions]);
 
   // Convert to pie chart data format
   const pieData = Object.entries(spendingByCategory)
@@ -65,20 +85,20 @@ const MonthDetailScreen: React.FC<any> = ({ route }) => {
 
   // Calculate total spending
   const totalSpending = Object.values(spendingByCategory).reduce((sum, amount) => sum + amount, 0);
-  
+
   // Calculate income and net for this month
   const monthIncome = useMemo(() => {
-    return DUMMY_EXPENSES.reduce((sum, exp) => {
-      if (exp.amount > 0 && exp.date.getFullYear() === year && exp.date.getMonth() === month) {
+    return transactions.reduce((sum, exp) => {
+      if (exp.amount > 0) {
         return sum + exp.amount;
       }
       return sum;
     }, 0);
-  }, [year, month]);
-  
+  }, [transactions]);
+
   // Net = Income - Spending
   const netIncome = monthIncome - totalSpending;
-  
+
   // Calculate percentage of income left after spending
   const percentageLeft = monthIncome > 0 
     ? Math.max(0, Math.round((netIncome / monthIncome) * 100)) 

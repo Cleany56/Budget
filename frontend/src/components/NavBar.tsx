@@ -14,6 +14,14 @@ interface NavBarProps {
 
 const NavBar: React.FC<NavBarProps> = ({ date, onSettingsPress, toggleDarkMode, showBack, onBackPress }) => {
   const { darkMode, colors } = useTheme();
+  
+  // Simple function to handle dark mode toggle
+  const handleDarkModeToggle = () => {
+    if (toggleDarkMode) {
+      toggleDarkMode();
+    }
+  };
+  
   return (
     <SafeAreaView edges={["top"]} style={[styles.safeArea, { backgroundColor: colors.background }] }>
       <View style={[styles.container, { backgroundColor: colors.background, borderBottomColor: colors.border }] }>
@@ -28,7 +36,7 @@ const NavBar: React.FC<NavBarProps> = ({ date, onSettingsPress, toggleDarkMode, 
         )}
         <Text style={[styles.date, { color: colors.text }]}>{date}</Text>
         <TouchableOpacity
-          onPress={toggleDarkMode || (() => {})}
+          onPress={handleDarkModeToggle}
           style={styles.iconButton}
           accessibilityLabel="Toggle dark mode"
         >

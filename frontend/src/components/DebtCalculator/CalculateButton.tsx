@@ -7,10 +7,19 @@ interface CalculateButtonProps {
 }
 
 const CalculateButton: React.FC<CalculateButtonProps> = ({ onPress, colors }) => {
+  const handlePress = () => {
+    // Ensure the calculation function is called
+    if (onPress) {
+      onPress();
+    }
+  };
+
   return (
     <TouchableOpacity
       style={[styles.calculateButton, { backgroundColor: colors.primary }]}
-      onPress={onPress}
+      onPress={handlePress}
+      accessibilityLabel="Calculate Repayment Plan"
+      accessibilityHint="Calculates debt repayment schedule using current values"
     >
       <Text style={styles.calculateButtonText}>Calculate Repayment Plan</Text>
     </TouchableOpacity>

@@ -1,0 +1,33 @@
+/**
+ * DebtCalculator Fixes for PaymentInput and Double Dollar Signs
+ * 
+ * Here are the changes needed to fix the debt calculator issues:
+ * 
+ * 1. In PaymentInput.tsx:
+ * -----------------------------
+ * Change the import from:
+ *   import { formatAsCurrency as formatCurrency } from '../../utils/formatters';
+ * to:
+ *   import { normalizeCurrencyInput } from '../../utils/formatters';
+ * 
+ * Then change the onChangeText line from:
+ *   onChangeText={(value) => setMonthlyPayment(formatCurrency(value))}
+ * to:
+ *   onChangeText={(value) => setMonthlyPayment(normalizeCurrencyInput(value))}
+ * 
+ * 
+ * 2. In hooks/useDebtCalculator/index.ts:
+ * ----------------------------------------
+ * Fix the calculateResults function to handle dollar signs correctly
+ * (around line 135 and 167). Change both occurrences from:
+ *   setTimeToPayoff(`${years} years, ${remainingMonths} months`);
+ * to:
+ *   const yearsDisplay = years === 1 ? '1 year' : `${years} years`;
+ *   const monthsDisplay = remainingMonths === 1 ? '1 month' : `${remainingMonths} months`;
+ *   setTimeToPayoff(`${yearsDisplay}, ${monthsDisplay}`);
+ * 
+ * 
+ * This should fix both issues:
+ * 1. The ability to type in the monthly payment field
+ * 2. The double dollar sign in the results display
+ */

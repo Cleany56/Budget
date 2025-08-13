@@ -24,15 +24,16 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     <View style={[styles.resultsContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
       <Text style={[styles.resultsTitle, { color: colors.text }]}>Results</Text>
       
-      <View style={styles.resultItem}>
-        <Text style={[styles.resultLabel, { color: colors.text }]}>Time to payoff:</Text>
-        <Text style={[styles.resultValue, { color: colors.text }]}>{timeToPayoff}</Text>
-      </View>
-      
-      {calculationMode === 'timeframe' && requiredPayment && (
         <View style={styles.resultItem}>
-          <Text style={[styles.resultLabel, { color: colors.text }]}>Required monthly payment:</Text>
+          <Text style={[styles.resultLabel, { color: colors.text }]}>Time to payoff:</Text>
+          <Text style={[styles.resultValue, { color: colors.text }]}>{timeToPayoff}</Text>
+        </View>      {calculationMode === 'timeframe' && requiredPayment && (
+        <View style={styles.resultItem}>
+          <Text style={[styles.resultLabel, { color: colors.text }]}>Required total monthly payment:</Text>
           <Text style={[styles.resultValue, { color: colors.text }]}>{requiredPayment}</Text>
+          <Text style={[styles.resultNote, { color: colors.muted }]}>
+            This includes all minimum payments plus extra to meet your timeframe
+          </Text>
         </View>
       )}
       
@@ -66,6 +67,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
+    flexWrap: 'wrap',
+  },
+  resultNote: {
+    fontSize: 13,
+    width: '100%',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   resultLabel: {
     fontSize: 16,
