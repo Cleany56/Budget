@@ -16,9 +16,13 @@ const RepaymentStrategyPicker: React.FC<RepaymentStrategyPickerProps> = ({
 }) => {
   // Handle repayment method change
   const handleRepaymentMethodChange = (value: RepaymentMethod) => {
+    console.log(`Changing repayment method to: ${value}`);
+    
     // Update the repayment method
     setRepaymentMethod(value);
-    // Results will auto-update via useEffect in the hook
+    
+    // Note: Results will auto-update via useEffect in the hook
+    // The hook watches for changes to repaymentMethod and recalculates
   };
 
   return (
@@ -39,6 +43,11 @@ const RepaymentStrategyPicker: React.FC<RepaymentStrategyPickerProps> = ({
           <Picker.Item key="snowball" label="Debt Snowball (Smallest Balance First)" value="snowball" />
         </Picker>
       </View>
+      
+      <Text style={[styles.infoText, { color: colors.muted }]}>
+        Note: When the smallest balance debt also has the highest interest rate, 
+        both methods will yield identical results.
+      </Text>
     </View>
   );
 };
@@ -62,6 +71,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     height: 50,
     justifyContent: 'center',
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    lineHeight: 16,
   },
 });
 

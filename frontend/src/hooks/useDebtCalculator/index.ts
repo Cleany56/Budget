@@ -57,6 +57,7 @@ export const useDebtCalculator = (): UseDebtCalculatorResult => {
   const [debts, setDebts] = useState<DebtItem[]>([
     { id: '1', name: 'Credit Card', balance: 5000, interestRate: 18.9, minPayment: 150 },
     { id: '2', name: 'Student Loan', balance: 15000, interestRate: 4.5, minPayment: 180 },
+    { id: '3', name: 'Car Loan', balance: 3000, interestRate: 6.5, minPayment: 120 },
   ]);
   
   // New debt form state
@@ -148,16 +149,25 @@ export const useDebtCalculator = (): UseDebtCalculatorResult => {
   
   // Automatically recalculate when relevant parameters change if a calculation has already been performed
   useEffect(() => {
+    // This effect specifically watches for changes in the repayment method
     if (calculationPerformed) {
+      console.log(`Repayment method changed to: ${repaymentMethod}, recalculating...`);
       // Force recalculation when repayment method changes
       performCalculation();
     }
+  }, [repaymentMethod]); // Only re-run when repayment method changes
+  
+  // Additional effect to handle other dependency changes
+  useEffect(() => {
+    if (calculationPerformed) {
+      console.log("Calculation state changed, recalculating...");
+      performCalculation();
+    }
   }, [
-    repaymentMethod, // Recalculate when strategy changes
     calculationPerformed,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     // Disable the exhaustive deps warning as we want to control exactly when recalculations happen
-  ]); // Re-run when these dependencies change
+  ]); // Re-run when calculation performed state changes
   
   // Actions
   const addDebt = (newDebtData: Omit<DebtItem, 'id'>) => {
@@ -212,6 +222,14 @@ export const useDebtCalculator = (): UseDebtCalculatorResult => {
         return;
       }
     }
+    
+    // Log details about the calculation
+    console.log(`Calculating debt repayment with strategy: ${repaymentMethod}`);
+    console.log(`Debts order will be: ${
+      repaymentMethod === 'avalanche' 
+        ? 'Highest interest rate first' 
+        : 'Smallest balance first'
+    }`);
     
     // Mark that a calculation has been performed
     setCalculationPerformed(true);

@@ -58,6 +58,7 @@ const DebtCalculatorScreen: React.FC = () => {
     timeToPayoff,
     requiredPayment,
     totalInterest,
+    paymentSchedule, // Add payment schedule for chart
     
     // Actions
     calculateResults,
@@ -150,6 +151,8 @@ const DebtCalculatorScreen: React.FC = () => {
             requiredPayment={requiredPayment}
             totalInterest={totalInterest}
             calculationMode={calculationMode}
+            repaymentMethod={repaymentMethod}
+            paymentSchedule={paymentSchedule}
             colors={colors}
           />
         </View>
