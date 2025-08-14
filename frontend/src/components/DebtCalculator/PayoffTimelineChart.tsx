@@ -216,7 +216,7 @@ const parseColorForRgba = (color: string) => {
     // Return default for other formats
     return '128, 128, 128';
   } catch (error) {
-    console.log('Error parsing color:', error);
+    // console.log('Error parsing color:', error);
     return '128, 128, 128';
   }
 };

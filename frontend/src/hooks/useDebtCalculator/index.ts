@@ -151,7 +151,7 @@ export const useDebtCalculator = (): UseDebtCalculatorResult => {
   useEffect(() => {
     // This effect specifically watches for changes in the repayment method
     if (calculationPerformed) {
-      console.log(`Repayment method changed to: ${repaymentMethod}, recalculating...`);
+      // console.log(`Repayment method changed to: ${repaymentMethod}, recalculating...`);
       // Force recalculation when repayment method changes
       performCalculation();
     }
@@ -160,7 +160,7 @@ export const useDebtCalculator = (): UseDebtCalculatorResult => {
   // Additional effect to handle other dependency changes
   useEffect(() => {
     if (calculationPerformed) {
-      console.log("Calculation state changed, recalculating...");
+      // console.log("Calculation state changed, recalculating...");
       performCalculation();
     }
   }, [
@@ -224,12 +224,12 @@ export const useDebtCalculator = (): UseDebtCalculatorResult => {
     }
     
     // Log details about the calculation
-    console.log(`Calculating debt repayment with strategy: ${repaymentMethod}`);
-    console.log(`Debts order will be: ${
-      repaymentMethod === 'avalanche' 
-        ? 'Highest interest rate first' 
-        : 'Smallest balance first'
-    }`);
+    // console.log(`Calculating debt repayment with strategy: ${repaymentMethod}`);
+    // console.log(`Debts order will be: ${
+    //   repaymentMethod === 'avalanche' 
+    //     ? 'Highest interest rate first' 
+    //     : 'Smallest balance first'
+    // }`);
     
     // Mark that a calculation has been performed
     setCalculationPerformed(true);

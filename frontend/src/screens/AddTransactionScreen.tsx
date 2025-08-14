@@ -31,17 +31,17 @@ const AddTransactionScreen: React.FC = () => {
   
   // Debug selectedAccountId changes
   useEffect(() => {
-    console.log("EFFECT - selectedAccountId changed to:", selectedAccountId);
+    // console.log("EFFECT - selectedAccountId changed to:", selectedAccountId);
   }, [selectedAccountId]);
   
   // Function to reload accounts from the server
   const reloadAccounts = async () => {
     try {
       setLoadingAccounts(true);
-      console.log("Reloading accounts from server...");
+      // console.log("Reloading accounts from server...");
       
       const freshAccounts = await getAccounts(false);
-      console.log(`Loaded ${freshAccounts.length} accounts from server`);
+      // console.log(`Loaded ${freshAccounts.length} accounts from server`);
       
       if (freshAccounts.length === 0) {
         Alert.alert('No Accounts', 'No accounts found. Please add an account first.');
@@ -58,7 +58,7 @@ const AddTransactionScreen: React.FC = () => {
           (a.type === 'Checking')
       ) || freshAccounts[0];
       
-      console.log("Setting default account to:", defaultAccount.name, defaultAccount.id);
+      // console.log("Setting default account to:", defaultAccount.name, defaultAccount.id);
       setSelectedAccountId(defaultAccount.id);
     } catch (error) {
       console.error('Failed to reload accounts:', error);
@@ -75,7 +75,7 @@ const AddTransactionScreen: React.FC = () => {
             text: 'Fix Accounts',
             onPress: async () => {
               try {
-                console.log("Attempting to fix accounts...");
+                // console.log("Attempting to fix accounts...");
                 
                 // Use the new function from accounts service
                 const fixedCount = await fixAccountsWithMissingIds();
@@ -114,38 +114,38 @@ const AddTransactionScreen: React.FC = () => {
   
   // Debug: Log account state information
   useEffect(() => {
-    console.log("DEBUG - Current account selection state:");
-    console.log("Selected Account ID:", selectedAccountId);
-    console.log("Total accounts:", accounts.length);
-    console.log("Filtered accounts:", filteredAccounts.length);
-    console.log("First account ID (if any):", filteredAccounts.length > 0 ? filteredAccounts[0].id : "none");
+    // console.log("DEBUG - Current account selection state:");
+    // console.log("Selected Account ID:", selectedAccountId);
+    // console.log("Total accounts:", accounts.length);
+    // console.log("Filtered accounts:", filteredAccounts.length);
+    // console.log("First account ID (if any):", filteredAccounts.length > 0 ? filteredAccounts[0].id : "none");
     
-    if (selectedAccountId) {
-      const selectedAccount = accounts.find(a => a.id === selectedAccountId);
-      console.log("Selected account found:", selectedAccount ? "yes" : "no");
-      if (selectedAccount) {
-        console.log("Selected account name:", selectedAccount.name);
-      }
-    }
+    // if (selectedAccountId) {
+    //   const selectedAccount = accounts.find(a => a.id === selectedAccountId);
+    //   console.log("Selected account found:", selectedAccount ? "yes" : "no");
+    //   if (selectedAccount) {
+    //     console.log("Selected account name:", selectedAccount.name);
+    //   }
+    // }
   }, [selectedAccountId, accounts, filteredAccounts]);
   
   // Effect to update selected account when filteredAccounts changes
   useEffect(() => {
-    console.log("Filtered accounts changed - length:", filteredAccounts.length);
+    // console.log("Filtered accounts changed - length:", filteredAccounts.length);
     
     if (filteredAccounts.length > 0) {
       // Check if current selection is valid in filtered list
       const isCurrentSelectionValid = filteredAccounts.some(account => account.id === selectedAccountId);
-      console.log("Is current selection valid:", isCurrentSelectionValid);
+      // console.log("Is current selection valid:", isCurrentSelectionValid);
       
       if (!isCurrentSelectionValid || !selectedAccountId) {
         // If not valid or undefined, select the first account in filtered list
-        console.log("Updating selected account to:", filteredAccounts[0].name);
+        // console.log("Updating selected account to:", filteredAccounts[0].name);
         setSelectedAccountId(filteredAccounts[0].id);
       }
     } else if (selectedAccountId) {
       // No accounts available, clear selection
-      console.log("No filtered accounts available, clearing selection");
+      // console.log("No filtered accounts available, clearing selection");
       setSelectedAccountId('');
     }
   }, [filteredAccounts, isIncome]);
@@ -157,10 +157,10 @@ const AddTransactionScreen: React.FC = () => {
         setLoadingAccounts(true);
         const fetchedAccounts = await getAccounts(false);
         
-        console.log("FETCH - Got accounts:", fetchedAccounts.length);
+        // console.log("FETCH - Got accounts:", fetchedAccounts.length);
         
         if (fetchedAccounts.length === 0) {
-          console.log("FETCH - No accounts available");
+          // console.log("FETCH - No accounts available");
           setAccounts([]);
           setLoadingAccounts(false);
           return;

@@ -37,24 +37,24 @@ const transformAccount = (account: BackendAccount): AccountSummary => {
   };
   
   // Debug the account object coming from the backend
-  console.log('===== ACCOUNT OBJECT FROM BACKEND =====');
-  console.log(`Account ID: _id="${account._id}", id="${account.id}"`);
-  console.log(`Account name: "${account.name}"`);
-  console.log(`Account type: "${account.type}"`);
-  console.log(`Account balance: ${account.balance}`);
-  console.log('Raw account object:', JSON.stringify(account, null, 2));
+  // console.log('===== ACCOUNT OBJECT FROM BACKEND =====');
+  // console.log(`Account ID: _id="${account._id}", id="${account.id}"`);
+  // console.log(`Account name: "${account.name}"`);
+  // console.log(`Account type: "${account.type}"`);
+  // console.log(`Account balance: ${account.balance}`);
+  // console.log('Raw account object:', JSON.stringify(account, null, 2));
   
   // Extract the ID with fallbacks
   let accountId: string | undefined;
   
   // First try _id (MongoDB style)
   if (account._id) {
-    console.log(`Using _id field: ${account._id}`);
+    // console.log(`Using _id field: ${account._id}`);
     accountId = account._id;
   } 
   // Then try id (REST API style)
   else if (account.id) {
-    console.log(`Using id field: ${account.id}`);
+    // console.log(`Using id field: ${account.id}`);
     accountId = account.id;
   }
   // If both are missing, generate emergency ID
@@ -75,7 +75,7 @@ const transformAccount = (account: BackendAccount): AccountSummary => {
     currency: account.currency
   };
   
-  console.log('Transformed account:', result);
+  // console.log('Transformed account:', result);
   return result;
 };
 
@@ -85,14 +85,14 @@ const transformAccount = (account: BackendAccount): AccountSummary => {
  */
 export const fixAccountsWithMissingIds = async (): Promise<number> => {
   try {
-    console.log('Calling fix-accounts endpoint...');
+    // console.log('Calling fix-accounts endpoint...');
     
     // Using the dedicated endpoint instead of the accounts route
     const response = await apiClient.get('/fix-accounts', {
       params: { userId: 'user123' }
     });
     
-    console.log('Account fix response:', response.data);
+    // console.log('Account fix response:', response.data);
     
     // Show more details in case of issues
     if (response.data.success === false) {
@@ -119,20 +119,20 @@ export const getAccounts = async (attemptFix: boolean = false): Promise<AccountS
     });
     
     // Log for debugging
-    console.log('Fetched accounts:', response.data);
+    // console.log('Fetched accounts:', response.data);
     
     // Only attempt to fix accounts if explicitly requested and accounts have issues
     if (attemptFix) {
       const accountsWithoutIds = response.data.filter((account: any) => !account._id && !account.id);
       if (accountsWithoutIds.length > 0) {
-        console.log(`Found ${accountsWithoutIds.length} accounts without IDs, attempting fix...`);
+        // console.log(`Found ${accountsWithoutIds.length} accounts without IDs, attempting fix...`);
         try {
           const fixedCount = await fixAccountsWithMissingIds();
-          console.log(`Fixed ${fixedCount} accounts`);
+          // console.log(`Fixed ${fixedCount} accounts`);
           
           if (fixedCount > 0) {
             // Re-fetch accounts after fixing
-            console.log('Re-fetching accounts after fix...');
+            // console.log('Re-fetching accounts after fix...');
             const newResponse = await apiClient.get('/accounts', {
               params: { userId: 'user123' }
             });
@@ -150,18 +150,18 @@ export const getAccounts = async (attemptFix: boolean = false): Promise<AccountS
     
     // After fixing, handle any accounts that might still have issues
     const accountsWithoutIds = response.data.filter((account: any) => !account._id);
-    console.log(`Found ${accountsWithoutIds.length} accounts without IDs after fix attempt`);
+    // console.log(`Found ${accountsWithoutIds.length} accounts without IDs after fix attempt`);
     
     // Transform each account with our enhanced transform function that includes emergency fallback
     let transformedAccounts;
     try {
       transformedAccounts = response.data.map(transformAccount);
-      console.log(`Successfully transformed ${transformedAccounts.length} accounts`);
+      // console.log(`Successfully transformed ${transformedAccounts.length} accounts`);
     } catch (transformError) {
       console.error('Error transforming accounts:', transformError);
       
       // Last resort recovery: create minimal accounts
-      console.warn('FALLBACK: Creating minimal accounts from raw data');
+      // console.warn('FALLBACK: Creating minimal accounts from raw data');
       transformedAccounts = response.data.map((account: any) => {
         const id = account._id || `recovery-${Math.random().toString(36).substring(2, 15)}`;
         return {

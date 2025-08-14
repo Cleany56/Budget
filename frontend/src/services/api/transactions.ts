@@ -81,12 +81,12 @@ export const getTransactions = async (params: TransactionQueryParams = {}): Prom
     const response = await apiClient.get('/expenses', { params: queryParams });
     
     // Log the response structure to debug
-    console.log('Transactions response structure:', {
-      hasData: !!response.data?.data,
-      isPaginated: !!response.data?.pagination,
-      dataType: response.data?.data ? typeof response.data.data : 'N/A',
-      isArray: response.data?.data ? Array.isArray(response.data.data) : false
-    });
+    // console.log('Transactions response structure:', {
+    //   hasData: !!response.data?.data,
+    //   isPaginated: !!response.data?.pagination,
+    //   dataType: response.data?.data ? typeof response.data.data : 'N/A',
+    //   isArray: response.data?.data ? Array.isArray(response.data.data) : false
+    // });
     
     // Handle paginated response (data property contains the actual transactions)
     if (response.data && response.data.data && Array.isArray(response.data.data)) {
@@ -115,12 +115,12 @@ export const getAccountTransactions = async (accountId: string): Promise<Expense
     // Use the specific 'by-account' endpoint for better handling
     const response = await apiClient.get(`/expenses/by-account/${accountId}`);
     
-    console.log('Account transactions response:', {
-      hasData: !!response.data?.data,
-      hasAccount: !!response.data?.account,
-      isPaginated: !!response.data?.pagination,
-      dataLength: response.data?.data?.length
-    });
+    // console.log('Account transactions response:', {
+    //   hasData: !!response.data?.data,
+    //   hasAccount: !!response.data?.account,
+    //   isPaginated: !!response.data?.pagination,
+    //   dataLength: response.data?.data?.length
+    // });
     
     // Handle paginated response (data property contains the actual transactions)
     if (response.data && response.data.data && Array.isArray(response.data.data)) {
@@ -134,7 +134,7 @@ export const getAccountTransactions = async (accountId: string): Promise<Expense
     
     // Handle case where data might be empty but valid
     if (response.data && response.data.data === null) {
-      console.log(`No transactions found for account ${accountId}`);
+      // console.log(`No transactions found for account ${accountId}`);
       return [];
     }
     
@@ -186,12 +186,12 @@ export const createTransaction = async (expense: Omit<Expense, 'id'>): Promise<E
     }
     
     // Log the transaction being sent
-    console.log('Creating transaction with data:', {
-      title: expense.title,
-      amount: expense.amount,
-      category: expense.category,
-      accountId: expense.accountId
-    });
+    // console.log('Creating transaction with data:', {
+    //   title: expense.title,
+    //   amount: expense.amount,
+    //   category: expense.category,
+    //   accountId: expense.accountId
+    // });
     
     // Transform to backend format
     const backendTransaction = {
@@ -285,11 +285,11 @@ export const getMonthlySpending = async (
     if (params.categories && params.categories.length > 0) queryParams.categories = params.categories.join(',');
     if (params.accounts && params.accounts.length > 0) queryParams.accounts = params.accounts.join(',');
     
-    console.log('Fetching monthly spending with params:', queryParams);
+    // console.log('Fetching monthly spending with params:', queryParams);
     const response = await apiClient.get('/expenses/monthly-spending', { params: queryParams });
     return response.data;
   } catch (error) {
-    console.error('Error fetching monthly spending:', error);
+    // console.error('Error fetching monthly spending:', error);
     throw error;
   }
 };

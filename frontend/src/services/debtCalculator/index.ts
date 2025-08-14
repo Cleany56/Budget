@@ -18,40 +18,40 @@ export const calculateDebtRepayment = (
   let workingDebts = JSON.parse(JSON.stringify(debts)) as DebtItem[];
   
   // Log initial state before sorting
-  console.log(`Debt calculation starting. Strategy: ${repaymentMethod}`);
-  console.log('Original debt order:', workingDebts.map(debt => 
-    `${debt.name}: $${debt.balance} at ${debt.interestRate}%`
-  ));
+  // console.log(`Debt calculation starting. Strategy: ${repaymentMethod}`);
+  // console.log('Original debt order:', workingDebts.map(debt => 
+  //   `${debt.name}: $${debt.balance} at ${debt.interestRate}%`
+  // ));
   
   // Sort based on repayment method
   if (repaymentMethod === 'avalanche') {
     // Sort by highest interest rate first (avalanche method)
     workingDebts.sort((a, b) => b.interestRate - a.interestRate);
-    console.log('Using AVALANCHE method - Highest interest rate first');
+    // console.log('Using AVALANCHE method - Highest interest rate first');
     
     // Check if snowball would result in the same order
     const snowballOrder = [...workingDebts].sort((a, b) => a.balance - b.balance);
     const sameOrder = workingDebts.every((debt, index) => debt.id === snowballOrder[index].id);
     if (sameOrder) {
-      console.log('NOTE: For this debt scenario, Avalanche and Snowball methods will prioritize the same debt first, resulting in identical payoff schedules.');
+      // console.log('NOTE: For this debt scenario, Avalanche and Snowball methods will prioritize the same debt first, resulting in identical payoff schedules.');
     }
   } else if (repaymentMethod === 'snowball') {
     // Sort by lowest balance first (snowball method)
     workingDebts.sort((a, b) => a.balance - b.balance);
-    console.log('Using SNOWBALL method - Smallest balance first');
+    // console.log('Using SNOWBALL method - Smallest balance first');
     
     // Check if avalanche would result in the same order
     const avalancheOrder = [...workingDebts].sort((a, b) => b.interestRate - a.interestRate);
     const sameOrder = workingDebts.every((debt, index) => debt.id === avalancheOrder[index].id);
     if (sameOrder) {
-      console.log('NOTE: For this debt scenario, Avalanche and Snowball methods will prioritize the same debt first, resulting in identical payoff schedules.');
+      // console.log('NOTE: For this debt scenario, Avalanche and Snowball methods will prioritize the same debt first, resulting in identical payoff schedules.');
     }
   }
   
   // Log the sorted order
-  console.log('Prioritized debt order after sorting:', workingDebts.map(debt => 
-    `${debt.name}: $${debt.balance} at ${debt.interestRate}%`
-  ));
+  // console.log('Prioritized debt order after sorting:', workingDebts.map(debt => 
+  //   `${debt.name}: $${debt.balance} at ${debt.interestRate}%`
+  // ));
   
   // Calculate total minimum payment
   const totalMinPayment = workingDebts.reduce((sum, debt) => sum + debt.minPayment, 0);

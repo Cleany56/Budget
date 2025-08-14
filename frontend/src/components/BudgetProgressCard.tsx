@@ -31,9 +31,9 @@ const BudgetProgressCard: React.FC<BudgetProgressCardProps> = ({ budget, colors 
       
       <View style={styles.amountsRow}>
         <Text style={[styles.spent, { color: colors.text }]}>
-          ${budget.spent.toFixed(2)} <Text style={styles.of}>of</Text> ${budget.amount.toFixed(2)}
+          ${budget.spent.toFixed(2)} <Text style={[styles.of, { color: colors.text }]}>of</Text> ${budget.amount.toFixed(2)}
         </Text>
-        <Text style={[styles.remaining, { color: percentage > 90 ? colors.error : colors.secondary }]}>
+        <Text style={[styles.remaining, { color: percentage > 90 ? colors.error : colors.text }]}>
           ${(budget.amount - budget.spent).toFixed(2)} left
         </Text>
       </View>
@@ -51,7 +51,7 @@ const BudgetProgressCard: React.FC<BudgetProgressCardProps> = ({ budget, colors 
       </View>
       
       {budget.month && (
-        <Text style={[styles.month, { color: colors.secondary }]}>{budget.month}</Text>
+        <Text style={[styles.month, { color: colors.text }]}>{budget.month}</Text>
       )}
     </View>
   );

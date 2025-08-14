@@ -41,7 +41,7 @@ const StatSwitcher: React.FC<StatSwitcherProps> = ({ accounts, isLoading, error 
         const data = await getMonthlySpending({
           dateRange: 'thisMonth' // Default to current month
         });
-        console.log('Monthly spending data:', data);
+        // console.log('Monthly spending data:', data);
         
         setSpendingData({
           totalSpending: data.totalSpending,
@@ -50,7 +50,7 @@ const StatSwitcher: React.FC<StatSwitcherProps> = ({ accounts, isLoading, error 
           error: null
         });
       } catch (err) {
-        console.error('Error fetching monthly spending:', err);
+        // console.error('Error fetching monthly spending:', err);
         setSpendingData(prev => ({ 
           ...prev, 
           isLoading: false, 
@@ -63,7 +63,7 @@ const StatSwitcher: React.FC<StatSwitcherProps> = ({ accounts, isLoading, error 
   }, []);
   
   // Calculate assets and liabilities from accounts with debug logs
-  console.log('StatSwitcher received accounts:', accounts);
+  // console.log('StatSwitcher received accounts:', accounts);
   
   const assets = accounts
     .filter(a => a.type === 'Investment' || a.type === 'Checking' || a.type === 'Savings' || a.type === 'Bank')
@@ -73,11 +73,11 @@ const StatSwitcher: React.FC<StatSwitcherProps> = ({ accounts, isLoading, error 
     .filter(a => a.type === 'Credit Card')
     .reduce((sum, a) => sum + (a.balance < 0 ? Math.abs(a.balance) : 0), 0);
   
-  console.log('Calculated assets:', assets);
-  console.log('Calculated liabilities:', liabilities);
+  // console.log('Calculated assets:', assets);
+  // console.log('Calculated liabilities:', liabilities);
   
   const netWorth = assets - liabilities;
-  console.log('Calculated net worth:', netWorth);
+  // console.log('Calculated net worth:', netWorth);
   
   // Define card data
   const cards = [

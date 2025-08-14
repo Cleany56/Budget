@@ -61,7 +61,7 @@ const GoalProgressCard: React.FC<GoalProgressCardProps> = ({ goal, colors }) => 
       
       <View style={styles.amountsRow}>
         <Text style={[styles.amount, { color: colors.text }]}>
-          ${goal.currentAmount.toFixed(2)} <Text style={styles.of}>of</Text> ${goal.targetAmount.toFixed(2)}
+          ${goal.currentAmount.toFixed(2)} <Text style={[styles.of, { color: colors.text }]}>of</Text> ${goal.targetAmount.toFixed(2)}
         </Text>
         <Text style={[styles.target, { color: colors.primary }]}>
           {percentage}% complete
@@ -81,14 +81,14 @@ const GoalProgressCard: React.FC<GoalProgressCardProps> = ({ goal, colors }) => 
       </View>
       
       <View style={styles.footer}>
-        <Text style={[styles.date, { color: colors.secondary }]}>
+        <Text style={[styles.date, { color: colors.text }]}>
           Target: {formattedDate}
         </Text>
         <Text 
           style={[
             styles.days, 
             { 
-              color: diffDays < 30 ? colors.error : colors.secondary
+              color: diffDays < 30 ? colors.error : colors.text
             }
           ]}
         >

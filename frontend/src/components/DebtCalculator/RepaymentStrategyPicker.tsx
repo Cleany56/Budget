@@ -16,7 +16,7 @@ const RepaymentStrategyPicker: React.FC<RepaymentStrategyPickerProps> = ({
 }) => {
   // Handle repayment method change
   const handleRepaymentMethodChange = (value: RepaymentMethod) => {
-    console.log(`Changing repayment method to: ${value}`);
+    // console.log(`Changing repayment method to: ${value}`);
     
     // Update the repayment method
     setRepaymentMethod(value);

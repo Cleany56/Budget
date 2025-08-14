@@ -64,7 +64,7 @@ const TransactionsScreen: React.FC = () => {
           page: 1
         };
         
-        console.log(`Fetching transactions with limit: ${queryParams.limit}, page: ${page}`);
+        // console.log(`Fetching transactions with limit: ${queryParams.limit}, page: ${page}`);
         
         // Fetch transactions and accounts in parallel
         // Explicitly set attemptFix to false to prevent infinite loops
@@ -135,7 +135,7 @@ const TransactionsScreen: React.FC = () => {
     // Only load more if we haven't loaded all transactions yet, aren't currently loading,
     // and another load more operation isn't already in progress
     if (!allTransactionsLoaded && !isLoading && !isLoadingMoreRef.current) {
-      console.log(`Loading more transactions, page ${page + 1}`);
+      // console.log(`Loading more transactions, page ${page + 1}`);
       isLoadingMoreRef.current = true;
       setPage(page + 1);
       
